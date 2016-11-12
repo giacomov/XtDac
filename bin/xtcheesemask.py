@@ -19,8 +19,8 @@ from astropy.utils.exceptions import AstropyDeprecationWarning
 from astropy.wcs.wcs import FITSFixedWarning
 from scipy import ndimage
 
-from XtDac.bin.xtdac import HardwareUnit
-from XtDac.bin.xtdac import XMMWCS
+from XtDac.DivideAndConquer import HardwareUnit
+from XtDac.DivideAndConquer import XMMWCS
 
 levels = {'info': logging.INFO, 'debug': logging.DEBUG}
 logging.basicConfig(level=levels['info'])

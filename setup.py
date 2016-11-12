@@ -12,7 +12,8 @@ execfile('XtDac/version.py')
 packages = ['XtDac',
             'XtDac/BayesianBlocks',
             'XtDac/DivideAndConquer',
-            'XtDac/FixedBinSearch'
+            'XtDac/FixedBinSearch',
+            'XtDac/ChandraUtils'
             ]
 
 # XMM scripts
@@ -53,5 +54,10 @@ setup(
         'scipy>=0.13'],
 
     ext_modules=[],
-    scripts = xmm_scripts + chandra_scripts + main_executables
+    scripts = xmm_scripts + chandra_scripts + main_executables,
+
+    package_data={
+              'XtDac': ['data/chandra_csc_1.1.pickle.gz', 'data/sample_configuration.yml'],
+           },
+    include_package_data=True,
 )

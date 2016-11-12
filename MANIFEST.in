@@ -1,0 +1,2 @@
+include XtDac/data/chandra_csc_1.1.pickle.gz
+include XtDac/data/data/sample_configuration.yml
