@@ -29,7 +29,7 @@ import logging
 
 import collections
 
-from xtwp4.DivideAndConquer import XMMWCS
+from XtDac.DivideAndConquer import XMMWCS
 
 import ExposureMap
 

@@ -36,10 +36,10 @@ except:
 
     import pyfits
 
-from xtwp4.FixedBinSearch import fitsRegions
-from xtwp4.FixedBinSearch import FixedBinSearch
-from xtwp4.DivideAndConquer import XMMWCS
-from xtwp4.DivideAndConquer import HardwareUnit
+from XtDac.bin.xtdac import fitsRegions
+from XtDac.bin.xtdac import FixedBinSearch
+from XtDac.bin.xtdac import XMMWCS
+from XtDac.bin.xtdac import HardwareUnit
 
 import scipy.stats
 

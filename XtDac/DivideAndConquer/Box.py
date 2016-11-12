@@ -18,7 +18,7 @@ except:
     import pyfits
 pass
 
-from xtwp4.BayesianBlocks import bayesian_blocks, bayesian_blocks_not_unique
+from XtDac.BayesianBlocks import bayesian_blocks, bayesian_blocks_not_unique
 
 
 class Box(object):

@@ -8,7 +8,7 @@ except:
 import logging
 import subprocess
 
-from xtwp4.DivideAndConquer import XMMWCS
+from XtDac.DivideAndConquer import XMMWCS
 
 log = logging.getLogger("HardwareUnit")
 

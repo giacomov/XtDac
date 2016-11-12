@@ -9,17 +9,18 @@
 
 import argparse
 import logging
-import os
-import warnings
 
 import astropy.io.fits as pyfits
 import numpy
+import os
 import pyregion
+import warnings
 from astropy.utils.exceptions import AstropyDeprecationWarning
 from astropy.wcs.wcs import FITSFixedWarning
 from scipy import ndimage
-from xtwp4.DivideAndConquer import HardwareUnit
-from xtwp4.DivideAndConquer import XMMWCS
+
+from XtDac.bin.xtdac import HardwareUnit
+from XtDac.bin.xtdac import XMMWCS
 
 levels = {'info': logging.INFO, 'debug': logging.DEBUG}
 logging.basicConfig(level=levels['info'])
@@ -72,8 +73,6 @@ def resampleImage(imageData, imageWCS, scaleFactor, threshold):
             CD12 = 0
             CD22 = imageWCS['CDELT2']
         except KeyError:
-            if REPORT_ERRORS == True:
-                print("WARNING: astImages.rescaleImage() : no CDij or CDELT keywords found - not updating WCS.")
             scaledWCS = imageWCS.copy()
             return {'data': scaledData, 'wcs': scaledWCS}
 

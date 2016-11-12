@@ -6,7 +6,7 @@
 # Plotting configuration
 ##########################
 
-from xtwp4.DivideAndConquer import matplotlibConfig
+from XtDac.DivideAndConquer import matplotlibConfig
 
 # Use a matplotlib backend which does not show plots to the user
 # (they will be saved in files)
@@ -40,23 +40,23 @@ except:
     import pyfits
 pass
 
-from xtwp4.DivideAndConquer import GridGen
-from xtwp4.DivideAndConquer import HardwareUnit
-from xtwp4.DivideAndConquer import InterestingRegion
-from xtwp4.DivideAndConquer import Results
-from xtwp4.DivideAndConquer import TimeIntervalConsolidator
-from xtwp4.DivideAndConquer import XMMWCS
-from xtwp4.DivideAndConquer import Box
+from XtDac.DivideAndConquer import GridGen
+from XtDac.DivideAndConquer import HardwareUnit
+from XtDac.DivideAndConquer import InterestingRegion
+from XtDac.DivideAndConquer import Results
+from XtDac.DivideAndConquer import TimeIntervalConsolidator
+from XtDac.DivideAndConquer import XMMWCS
+from XtDac.DivideAndConquer import Box
 
-from xtwp4.FixedBinSearch import Likelihood
-from xtwp4.FixedBinSearch import fitsRegions
+from XtDac.FixedBinSearch import Likelihood
+from XtDac.FixedBinSearch import fitsRegions
 
 time, X, Y, tstart, tstop, event_header = (None, None, None, None, None, None)
 
 # Set up the logger (its verbosity level will be changed later on
 # using the value provided by the user)
 logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger("xtdac")
+log = logging.getLogger("XtDac")
 
 
 def validFITSfile(arg):
