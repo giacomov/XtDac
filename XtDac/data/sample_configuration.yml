@@ -25,8 +25,9 @@ remove work directory: 'yes'
 energy min: 500
 energy max: 7000
 
-# Ellipsed adjustment factor. The code will increase the size of the ellipses defined in the Chandra Source Catalog
-# by this factor, so 1.3 means increase by 30%
+# The code will increase the size of the ellipses defined in the Chandra Source Catalog
+# by this factor, so 1.3 means increase by 30%, which means more events will be cut. This is to avoid
+# triggering too much on variable sources
 adjustment factor: 1.3
 
 # Number of cores to use for processing
@@ -38,8 +39,10 @@ type I error probability: 1e-5
 # Threshold in significance for the likelihood analysis step after the Bayesian Blocks algorithm
 sigma threshold: 4.0
 
-# Multiplicity for the regions. A multiplicity of 2 means that there is half a size shift each region, 3 means there is
-# a shift of 1/3 and so on
+# Multiplicity for the regions. A multiplicity of 2 means that there is half-size shift between each region,
+# 3 means there is a shift of 1/3 and so on, so the higher this number, the more regions will be searched. Note
+# that this will increase the trial factor. Be careful that the number of regions increases quickly as the
+# multiplicity increases. It doesn't probably make sense to go beyond 4
 multiplicity: 3
 
 # Verbosity of the output (either 'info' or 'debug')
