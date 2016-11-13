@@ -10,11 +10,11 @@ region repository: ''
 output repository: ''
 
 # Work directory. Before doing anything, xtdac_acis will move here. All the temporary files will be created in a sub
-# directory of this working directory. Leave it to '.' to mean the directory where the script is launched. This is
+# directory of this working directory. Set it to '.' to mean the directory where the script is launched. This is
 # useful if you are running in a farm and you want to create the temporary file within the local hard drive on the
 # node. You can use environment variables as $ENV_VARIABLE, like $HOME/work_dir or /scratch/$JOBID
 # If the directory does not exist, it will be created
-work directory: './$TEST'
+work directory: ''
 
 # Remove work directory after the script has finished? yes or no. Note that if "work directory" is ".", then this will
 # have no effect as xtdac_acis will refuse to remove the current directory. If this is 'no', all temporary directories
