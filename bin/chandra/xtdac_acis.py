@@ -345,6 +345,8 @@ if __name__ == "__main__":
                     out_package.store(root, animated_gif, "Animation of the transient %s" % root)
 
                 # Move package to output repository
+
+                logger.info("Move the results to the output repository %s" % config['output repository'])
                 out_package.copy_to(config['output repository'])
     except:
 
