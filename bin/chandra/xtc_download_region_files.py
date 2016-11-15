@@ -7,24 +7,22 @@ import sys
 import argparse
 import multiprocessing
 import time
+import glob
 
 from XtDac.data_files import get_data_file_path
 from XtDac.ChandraUtils.work_within_directory import work_within_directory
 from XtDac.ChandraUtils.logging_system import get_logger
 from XtDac.ChandraUtils.configuration import get_configuration
 from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
+from XtDac.ChandraUtils.find_files import find_files
 
 
 def worker(obsid):
 
     obsid = int(obsid)
 
-    cmd_line = 'obsid_search_csc obsid=%s outfile=_.tsv download=all ' \
-               'filetype=reg mode=h clobber=yes verbose=0' % obsid
-
-    # if os.path.exists(str(obsid)):
-    #
-    #     return obsid
+    cmd_line = 'obsid_search_csc obsid=%s outfile=%s.tsv download=all ' \
+               'filetype=reg mode=h clobber=yes verbose=0' % (obsid, obsid)
 
     for j in range(10):
 
@@ -42,7 +40,30 @@ def worker(obsid):
 
         else:
 
-            break
+            # Check that we have all files
+            with open("%s.tsv" % obsid) as f:
+
+                lines = f.readlines()
+
+            # Remove comments
+            lines = filter(lambda x:x[0]!='#', lines)
+
+            # First line after the comment is the column head, so we need to subtract one
+            number_of_sources = len(lines) - 1
+
+            number_of_files = len(find_files("%s" % obsid, "*_reg3.fits.gz"))
+
+            if number_of_sources != number_of_files:
+
+                logger.error("Number of downloaded files different from number of sources. Retrying...")
+
+                continue
+
+            else:
+
+                # All good, go to next obsid
+
+                break
 
     if not os.path.exists(str(obsid)):
 
