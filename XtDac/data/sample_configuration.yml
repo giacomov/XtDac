@@ -2,7 +2,7 @@
 # (use a fully-qualified path, such as /home/user/chandra_data/)
 data repository: ''
 
-# Repository of the region files coming from the catalog. Fill it up with "download_chandra_region_files.py"
+# Repository of the region files coming from the catalog. Fill it up with "xtc_download_region_files.py"
 # (use a fully-qualified path, such as /home/user/chandra_data/)
 region repository: ''
 

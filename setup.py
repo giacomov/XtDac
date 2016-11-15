@@ -57,7 +57,7 @@ setup(
     scripts = xmm_scripts + chandra_scripts + main_executables,
 
     package_data={
-              'XtDac': ['data/chandra_csc_1.1.pickle.gz', 'data/sample_configuration.yml'],
+              'XtDac': ['data/chandra_csc_1.1.pickle.gz', 'data/sample_configuration.yml','data/obs_in_csc1.1.txt'],
            },
     include_package_data=True,
 )
