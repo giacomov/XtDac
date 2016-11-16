@@ -58,6 +58,8 @@ if __name__ == "__main__":
                 # Get the downloaded files
                 evtfiles = find_files.find_files(os.getcwd(), '*%s*evt3.fits' % this_obsid)
 
+                logger.log("Found %s event files" % len(evtfiles))
+
                 for evtfile in evtfiles:
 
                     # Get the root of the evt3 file name
@@ -65,6 +67,8 @@ if __name__ == "__main__":
                     # where the 001 is the observation segment
                     name_root = "_".join(os.path.basename(evtfile).split("_")[:-1])  # this is "acisf01578_001N001"
                     obsid_identifier = name_root.replace("acisf", "").split("N")[0]  # this is 01578_001
+
+                    logger.info("Processing %s" % obsid_identifier)
 
                     # Find exposure map and fov file
                     expmaps = find_files.find_files(os.getcwd(), "%s*exp3.fits*" % name_root)
@@ -79,6 +83,12 @@ if __name__ == "__main__":
                     expmap = expmaps[0]
                     fov = fovs[0]
 
+                    logger.info("Found tsv file: %s" % tsvfile)
+                    logger.info("Found expmap: %s" % expmap)
+                    logger.info("Found fov file: %s" % fov)
+
+                    logger.info("Creating data package %s" % obsid_identifier)
+
                     data_package = DataPackage(obsid_identifier, create=True)
 
                     data_package.store("evt3", evtfile, "Event file (Level 3) from the CSC", move=True)
@@ -86,8 +96,10 @@ if __name__ == "__main__":
                     data_package.store("exp3", expmap, "Exposure map (Level 3) from the CSC", move=True)
                     data_package.store("fov3", fov, "FOV file (Level 3) from the CSC", move=True)
 
-                    # Make the data package read-only so we cannot change files by accident
+                    logger.info("done")
 
+                    # Make the data package read-only so we cannot change files by accident
+                    logger.info("Making it read-only")
                     data_package.read_only = True
 
             else:
