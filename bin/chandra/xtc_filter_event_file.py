@@ -158,22 +158,31 @@ if __name__ == "__main__":
         ra_pnt = f['EVENTS'].header.get("RA_PNT")
         dec_pnt = f['EVENTS'].header.get("DEC_PNT")
 
+        frame_time = f['EVENTS'].header['TIMEDEL']
+
+        logger.info("Found a frame time of %s" % (frame_time))
+
     # Query a region of 30 arcmin, which should always cover the whole Chandra field of view,
     # to get the regions from the database
 
-    print "Querying region database..."
+    db_radius = 30.0
 
-    region_files_db = query_region_db.query_region_db(ra_pnt, dec_pnt, 30.0, db_dir)
+    logger.info("Querying region database for %s arcmin around (%s, %s)..." % (db_radius, ra_pnt, dec_pnt))
 
+    region_files_db = query_region_db.query_region_db(ra_pnt, dec_pnt, db_radius, db_dir)
+
+    logger.info("Got %s regions from DB" % len(region_files_db))
     # Now cross match the regions we got from the DB with the regions we got from this obsid
     # We try to use the information relative to this obsid as much as possible, but if there is no
     # info on a given source in this obsid we take it from the db
 
-    print "Cross-matching region files..."
+    logger.info("Cross-matching region files...")
 
     region_files = cross_match(region_files_db, region_files_obsid)
 
     n_reg = len(region_files)
+
+    logger.info("Kept %s regions" % n_reg)
 
     # Loop over the region files and prepare the corresponding region for filtering
 
@@ -267,9 +276,9 @@ if __name__ == "__main__":
 
                 # The readout time of the whole array is 3.2 s
 
-                target_rate = 1.0 / 3.2
+                target_rate = 1.0 / frame_time
 
-                if rate >= target_rate / 10.0:
+                if rate >= target_rate / 3.0:
                     # Source might generate out-of-time (readout streak) events
 
                     might_have_streaks = True
@@ -286,7 +295,7 @@ if __name__ == "__main__":
 
     # Merge all the region files
 
-    print("Merging region files...")
+    logger.info("Merging region files...")
 
     all_regions_file = '%s_all_regions.fits' % (obsid)
 
@@ -312,7 +321,7 @@ if __name__ == "__main__":
 
     # Finally filter the file
 
-    print("Filtering event file...")
+    logger.info("Filtering event file...")
 
     ###########################
     # Filter by energy
@@ -410,9 +419,7 @@ if __name__ == "__main__":
 
         time = f['EVENTS'].data.time
 
-        frame_time = f['EVENTS'].header['TIMEDEL']
-
-        logger.info("Found a frame time of %s. Randomizing arrival times within time frame..." % (frame_time))
+        logger.info("Randomizing arrival times within time frameof %s s..." % frame_time)
 
         deltas = np.random.uniform(-frame_time/2.0, frame_time/2.0, time.shape[0])
 
@@ -448,4 +455,4 @@ if __name__ == "__main__":
 
     else:
 
-        print("\n\nWARNING: did not remove temporary files because we are in debug mode")
+        logger.warn("\n\nWARNING: did not remove temporary files because we are in debug mode")

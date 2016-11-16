@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Check to see if transient candidates are actually hot pixels")
 
-    parser.add_argument("--obsid", help="Observation ID Numbers", type=int, required=True)
+    parser.add_argument("--obsid", help="Observation ID Numbers", type=str, required=True)
     parser.add_argument("--evtfile", help="Filtered CCD file", required=True)
     parser.add_argument("--bbfile", help="Text file for one CCD with transient candidates listed", required=True)
     parser.add_argument("--outfile", help="Name of output text file file", required=True)
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
             if len(chipx) == 0:
 
-                print "\n\n%s had no events between %s and %s!\n\n" % (reg_file, tstart, tstop)
+                logger.info("\n\n%s had no events between %s and %s!\n\n" % (reg_file, tstart, tstop))
 
             elif len(chipx) < 15:
 
@@ -274,4 +274,4 @@ if __name__ == "__main__":
                 os.remove(temp_reg_file)
 
     if args.debug == "yes":
-        print "NOTE: Debug mode, temporary region files not deleted"
+        logger.info("NOTE: Debug mode, temporary region files not deleted")

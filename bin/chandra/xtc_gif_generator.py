@@ -78,11 +78,11 @@ if __name__=="__main__":
             wcs = XMMWCS.XMMWCS(event_file, event_ext['EVENTS'].data.field("X"), event_ext['EVENTS'].data.field("Y"))
             transient_x, transient_y = wcs.sky2xy([[ra, dec]])[0]
 
-        print "Duration: %s" %duration
-        print "Tmin: %s" % tmin
-        print "Tmax: %s" %tmax
-        print "Obs Time: %s" %(tmax-tmin)
-        print "X,Y = (%.3f, %.3f)" % (transient_x, transient_y)
+        logger.info("Duration: %s" %duration)
+        logger.info("Tmin: %s" % tmin)
+        logger.info("Tmax: %s" %tmax)
+        logger.info("Obs Time: %s" %(tmax-tmin))
+        logger.info("X,Y = (%.3f, %.3f)" % (transient_x, transient_y))
 
         # Use the interval before the transient and the interval after the transient, as well as of course
         # the interval of the transient itself
@@ -185,7 +185,7 @@ if __name__=="__main__":
             os.remove(image)
 
         #animate and save gif
-        print "Creating gif ObsID %s, CCD %s, Candidate %s...\n" %(obsid, ccd, candidate)
+        logger.info("Creating gif ObsID %s, CCD %s, Candidate %s...\n" %(obsid, ccd, candidate))
         anim = ArtistAnimation(fig, frames, interval=2000)
         anim.save("%s_cand_%s.gif" %(evt_name, candidate), writer='imagemagick')
 

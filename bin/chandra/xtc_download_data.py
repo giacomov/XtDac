@@ -104,4 +104,4 @@ if __name__ == "__main__":
 
             else:
 
-                print "Region files do not exist for ObsID %s" % this_obsid
+                logger.error("Region files do not exist for ObsID %s" % this_obsid)

@@ -27,7 +27,7 @@ if __name__ == "__main__":
     logger = get_logger("xtc_separate_CCDs.py")
     runner = CommandRunner(logger)
 
-    print "Separating by CCD..."
+    logger.info("Separating by CCD...")
 
     for ccd_id in range(10):
 

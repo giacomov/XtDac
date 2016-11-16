@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-c", "--config_file", help="Path to the configuration file", type=str, required=True)
 
-    parser.add_argument("-o", "--obsid", help="Observation ID Numbers", type=int, required=True, nargs="+")
+    parser.add_argument("-o", "--obsid", help="Observation ID Numbers", type=str, required=True, nargs="+")
 
     # parser.add_argument('-r', '--region_repo', help="Path to the repository of region files",
     #                     type=str, required=True)
