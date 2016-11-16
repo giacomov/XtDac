@@ -117,17 +117,8 @@ if __name__ == "__main__":
     config = get_configuration(args.config_file)
 
     # Check whether we need to remove the workdir or not
-    if config['remove work directory'].lower()=='yes':
 
-        remove_work_dir = True
-
-    elif config['remove work directory'].lower()=='no':
-
-        remove_work_dir = False
-
-    else:
-
-        raise ValueError("The value for 'remove work directory' in the config file must be either 'yes' or 'no' ")
+    remove_work_dir = bool(config['remove work directory'])
 
     # Now move in the work directory and do the processing
     # Encapsulate all in a try/except clause so that even in case of errors we have the opportunity to clean up

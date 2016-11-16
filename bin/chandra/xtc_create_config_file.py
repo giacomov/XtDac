@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
             # Write key : value pair
 
-            if name_with_spaces.find("repository") > 0:
+            if name_with_spaces.find("repository") > 0 or name_with_spaces == 'work directory':
 
                 # Take absolute path
                 abs_path = sanitize_filename(args.__getattribute__(name))

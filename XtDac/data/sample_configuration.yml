@@ -14,7 +14,7 @@ output repository:
 # useful if you are running in a farm and you want to create the temporary file within the local hard drive on the
 # node. You can use environment variables as $ENV_VARIABLE, like $HOME/work_dir or /scratch/$JOBID
 # If the directory does not exist, it will be created
-work directory:
+work directory: workdir
 
 # Remove work directory after the script has finished? yes or no. Note that if "work directory" is ".", then this will
 # have no effect as xtdac_acis will refuse to remove the current directory. If this is 'no', all temporary directories
@@ -31,7 +31,7 @@ energy max: 7000
 adjustment factor: 1.3
 
 # Number of cores to use for processing
-number of processes: 8
+number of processes: 1
 
 # Probability of a Type I error in the Bayesian Block algorithm (the lower the value, the smaller the number of blocks)
 type I error probability: 1e-5
