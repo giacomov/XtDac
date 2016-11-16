@@ -1,5 +1,6 @@
 import yaml
 import os
+from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
 
 
 class ReadOnlyContainer(object):
@@ -14,6 +15,8 @@ class ReadOnlyContainer(object):
 
 
 def get_configuration(filename):
+
+    filename = sanitize_filename(filename)
 
     assert os.path.exists(filename), "Configuration file %s does not exist!" % filename
 
