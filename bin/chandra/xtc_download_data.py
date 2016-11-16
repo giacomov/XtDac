@@ -58,7 +58,7 @@ if __name__ == "__main__":
                 # Get the downloaded files
                 evtfiles = find_files.find_files(os.getcwd(), '*%s*evt3.fits' % this_obsid)
 
-                logger.log("Found %s event files" % len(evtfiles))
+                logger.info("Found %s event files" % len(evtfiles))
 
                 for evtfile in evtfiles:
 
