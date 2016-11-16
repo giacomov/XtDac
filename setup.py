@@ -51,7 +51,9 @@ setup(
     install_requires=[
         'numpy >= 1.6',
         'astropy >= 1.0',
-        'scipy>=0.13'],
+        'scipy>=0.13',
+        'fitsio',
+        'pyyaml'],
 
     ext_modules=[],
     scripts = xmm_scripts + chandra_scripts + main_executables,
