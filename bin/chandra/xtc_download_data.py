@@ -49,43 +49,46 @@ if __name__ == "__main__":
 
             if os.path.exists(regdir_this_obsid):
 
+                # This could download more than one observation segment for this obsid
+
                 cmd_line = "xtc_download_by_obsid.py --obsid %d" % this_obsid
 
                 runner.run(cmd_line)
 
-                try:
+                # Get the downloaded files
+                evtfiles = find_files.find_files(os.getcwd(), '*%s*evt3.fits' % this_obsid)
 
-                    evtfile = os.path.basename(find_files.find_files(os.getcwd(), '*%s*evt3.fits' % this_obsid)[0])
-                    tsvfile = os.path.basename(find_files.find_files(os.getcwd(), "%s.tsv" % this_obsid)[0])
-                    expmap = os.path.basename(find_files.find_files(os.getcwd(), "*%s*exp3.fits*" % this_obsid)[0])
-                    fov = os.path.basename(find_files.find_files(os.getcwd(), "*%s*fov3.fits*" % this_obsid)[0])
+                for evtfile in evtfiles:
 
-                except IndexError:
+                    # Get the root of the evt3 file name
+                    # The evt3 file name is like acisf01578_001N001_evt3.fits.gz,
+                    # where the 001 is the observation segment
+                    name_root = "_".join(os.path.basename(evtfile).split("_")[:-1])  # this is "acisf01578_001N001"
+                    obsid_identifier = name_root.replace("acisf", "").split("N")[0]  # this is 01578_001
 
-                    raise RuntimeError("\n\n\nCould not find one of the downloaded files for obsid %s. Exiting..."
-                                       % this_obsid)
+                    # Find exposure map and fov file
+                    expmaps = find_files.find_files(os.getcwd(), "%s*exp3.fits*" % name_root)
+                    fovs = find_files.find_files(os.getcwd(), "%s*fov3.fits*" % name_root)
+                    tsvfiles = find_files.find_files(os.getcwd(), "%s.tsv" % obsid_identifier)
 
-                data_package = DataPackage(str(this_obsid), create=True)
+                    assert len(expmaps) == 1, "Wrong number of exposure maps for event file %s" % evtfile
+                    assert len(fovs) == 1, "Wrong number of fov files for event file %s" % evtfile
+                    assert len(tsvfiles) == 1, "Wrong number of tsv files for obsid %s" % this_obsid
 
-                data_package.store("evt3", evtfile, "Event file (Level 3) from the CSC", move=True)
-                data_package.store("tsv", tsvfile, "TSV file from the CSC", move=True)
-                data_package.store("exp3", expmap, "Exposure map (Level 3) from the CSC", move=True)
-                data_package.store("fov3", fov, "FOV file (Level 3) from the CSC", move=True)
+                    tsvfile = tsvfiles[0]
+                    expmap = expmaps[0]
+                    fov = fovs[0]
 
-                # Make the data package read-only so we cannot change files by accident
+                    data_package = DataPackage(obsid_identifier, create=True)
 
-                data_package.read_only = True
+                    data_package.store("evt3", evtfile, "Event file (Level 3) from the CSC", move=True)
+                    data_package.store("tsv", tsvfile, "TSV file from the CSC", move=True)
+                    data_package.store("exp3", expmap, "Exposure map (Level 3) from the CSC", move=True)
+                    data_package.store("fov3", fov, "FOV file (Level 3) from the CSC", move=True)
 
-                # # Create directory named after obsid
-                # if not os.path.exists(str(this_obsid)):
-                #
-                #     os.mkdir(str(this_obsid))
-                #
-                # # Move files in there
-                #
-                # os.rename(evtfile, os.path.join(str(this_obsid), evtfile))
-                # os.rename(tsvfile, os.path.join(str(this_obsid), tsvfile))
-                # os.rename(expmap, os.path.join(str(this_obsid), expmap))
+                    # Make the data package read-only so we cannot change files by accident
+
+                    data_package.read_only = True
 
             else:
 

@@ -82,49 +82,81 @@ if __name__ == "__main__":
 
         # get paths of files
         evt3_files = find_files.find_files(work_dir, '*%s*evt3.fits.gz' % obsid)
-        tsv_files = find_files.find_files(work_dir, "%d.tsv" % obsid)
-        exp_files = find_files.find_files(work_dir, "*%s*exp3.fits.gz" % obsid)
-        asol_files = find_files.find_files(work_dir, '*asol*.fits.gz')
-        pbk_files = find_files.find_files(work_dir, '*pbk*.fits.gz')
-        fov_files = find_files.find_files(work_dir, "*%s*fov3.fits.gz" % obsid)
+        tsv_files = find_files.find_files(work_dir, '*%s*.tsv' % obsid)
 
-        if len(evt3_files) > 1 or len(tsv_files) > 1 or len(exp_files) > 1 or len(pbk_files) > 1 or len(fov_files) > 1:
+        if len(evt3_files) == 0:
 
-            raise RuntimeError("More than one event file in this tree. Did you clean up the directory before running "
-
-                               "this script?")
-
-        elif len(evt3_files) == 0 or len(tsv_files) == 0 or len(exp_files) == 0 or len(asol_files) == 0 \
-                or len(pbk_files) == 0 or len(fov_files) == 0:
-
-            raise RuntimeError("Could not find some of the downloaded files. Maybe download failed?")
+            raise RuntimeError("Could not find any event file. Maybe download failed?")
 
         else:
 
-            evt3 = evt3_files[0]
-            tsv = tsv_files[0]
-            exp = exp_files[0]
-            asol = ",".join(asol_files)
-            pbk = pbk_files[0]
-            fov = fov_files[0]
+            # The asol and pbk files contain the start time in their name, as in
+            # acisf102646229N003_pbk0.fits.gz, thus we find all of them here and we order
+            # them
 
-        # The r4_header_update script cannot run on a compressed fits file, so decompress the eventfile
+            asol_files = find_files.find_files(work_dir, '*asol*.fits.gz')
+            pbk_files = find_files.find_files(work_dir, '*pbk*.fits.gz')
 
-        cmd_line = "gunzip %s" % evt3
+            # Order them
+            def orderer(name):
 
-        runner.run(cmd_line)
+                return int(os.path.basename(name).split("N")[0][5:])
 
-        evt3 = evt3.replace("fits.gz", "fits")
+            asol_files = sorted(asol_files, key=orderer)
+            pbk_files = sorted(pbk_files, key=orderer)
 
-        # Run reprocessing
-        cmd_line = "r4_header_update infile=%s pbkfile=%s asolfile=%s" % (evt3, pbk, asol)
+            assert len(asol_files) > 0 and len(pbk_files) > 0, "Couldn't find ASOL or PBK files for obsid %s" % obsid
 
-        runner.run(cmd_line)
+            logger.info("Found %s observation segments" % len(evt3_files))
 
-        # move evt3 file and delete empty directories
+            for evt3, pbk, asol in zip(evt3_files, pbk_files, asol_files):
 
-        for this_file in [evt3, tsv, exp, fov]:
-            os.rename(this_file, os.path.basename(this_file))
+                # Get the root of the evt3 file name
+                # The evt3 file name is like acisf01578_001N001_evt3.fits.gz,
+                # where the 001 is the observation segment
+                name_root = "_".join(os.path.basename(evt3).split("_")[:-1])  # this is "acisf01578_001N001"
+
+                # Find exposure map and fov file
+                exp_files = find_files.find_files(work_dir, "%s_*exp3.fits.gz" % name_root)
+                fov_files = find_files.find_files(work_dir, "%s_*fov3.fits.gz" % name_root)
+
+                assert (len(exp_files) > 0) and len(fov_files) > 0, "Couldn't find exposure map or fov file " \
+                                                                    "corresponding to event file %s" % evt3
+
+                assert len(exp_files) == 1 and len(fov_files) == 1, "More than one exposure map or fov file for event " \
+                                                                    "file %s" % evt3
+
+                exp = exp_files[0]
+                fov = fov_files[0]
+
+                # The r4_header_update script cannot run on a compressed fits file, so decompress the eventfile
+
+                cmd_line = "gunzip %s" % evt3
+
+                runner.run(cmd_line)
+
+                evt3 = evt3.replace("fits.gz", "fits")
+
+                # Run reprocessing
+                cmd_line = "r4_header_update infile=%s pbkfile=%s asolfile=%s" % (evt3, pbk, asol)
+
+                runner.run(cmd_line)
+
+                # Copy tsv file
+                obs_identifier = name_root.replace("acisf","").split("N")[0]  # this is 01578_001
+
+                new_tsv = "%s.tsv" % obs_identifier
+
+                shutil.copy2(tsv_files[0], new_tsv)
+
+                # move files
+
+                for this_file in [evt3, exp, fov]:
+
+                    os.rename(this_file, os.path.basename(this_file))
+
+            # remove the tsv file
+            os.remove(tsv_files[0])
 
         # Remove temp directory
 
