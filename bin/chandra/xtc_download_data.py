@@ -9,20 +9,18 @@ import os
 import sys
 
 from XtDac.ChandraUtils import find_files
+from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
 from XtDac.ChandraUtils import logging_system
 from XtDac.ChandraUtils.data_package import DataPackage
 from XtDac.ChandraUtils.run_command import CommandRunner
 from XtDac.ChandraUtils.work_within_directory import work_within_directory
+from XtDac.ChandraUtils.configuration import get_configuration
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run following steps: download files by obsid')
 
-    parser.add_argument("-w", "--workdir", help="Directory for all the output (output files will be in a directory "
-                                                "named after the obsid)", type=str, required=True)
-
-    parser.add_argument('-r', '--region_repo', help="Path to the repository of region files",
-                        type=str, required=True)
+    parser.add_argument("-c", "--config_file", help="Path to the configuration file", type=str, required=True)
 
     parser.add_argument("-o", "--obsid", help="Observation ID Numbers", type=int, required=True, nargs='+')
 
@@ -34,17 +32,20 @@ if __name__ == "__main__":
     # Get the command runner
     runner = CommandRunner(logger)
 
-    # Sanitize the workdir
-    workdir = os.path.abspath(os.path.expandvars(os.path.expanduser(args.workdir)))
-    regdir = os.path.abspath(os.path.expandvars(os.path.expanduser(args.region_repo)))
+    # Get the configuration
+    config = get_configuration(args.config_file)
 
-    with work_within_directory(workdir):
+    # Sanitize the workdir
+    data_repository = sanitize_filename(config['data repository'])
+    region_repository = sanitize_filename(config['region repository'])
+
+    with work_within_directory(data_repository):
 
         # Download files
 
         for this_obsid in args.obsid:
 
-            regdir_this_obsid = os.path.join(regdir, str(this_obsid))
+            regdir_this_obsid = os.path.join(region_repository, str(this_obsid))
 
             if os.path.exists(regdir_this_obsid):
 
