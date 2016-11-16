@@ -50,11 +50,11 @@ if __name__ == "__main__":
 
         # Create temporary directory
 
-        temp_dir = "__temp"
+        temp_dir = "__temp_%s" % obsid
 
         if not os.path.exists(temp_dir):
 
-            os.makedirs("__temp")
+            os.makedirs(temp_dir)
 
         else:
 
