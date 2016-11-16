@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 runner.run(cmd_line)
 
                 # Get the downloaded files
-                evtfiles = find_files.find_files(os.getcwd(), '*%s*evt3.fits' % this_obsid)
+                evtfiles = find_files.find_files(os.getcwd(), 'acisf%05i*evt3.fits' % int(this_obsid))
 
                 logger.info("Found %s event files" % len(evtfiles))
 
