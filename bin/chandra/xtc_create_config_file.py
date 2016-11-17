@@ -112,7 +112,14 @@ if __name__ == "__main__":
                 if not os.path.exists(abs_path):
 
                     logger.info("Directory %s does not exist, creating it" % abs_path)
-                    os.makedirs(abs_path)
+
+                    try:
+
+                        os.makedirs(abs_path)
+
+                    except OSError:
+
+                        logger.error("Could not create directory %s" % abs_path)
 
                 f.write("%s : %s\n\n" % (name_with_spaces, abs_path))
 
