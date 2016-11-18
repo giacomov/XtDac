@@ -54,7 +54,8 @@ setup(
         'scipy>=0.13',
         'fitsio',
         'pyyaml',
-        'scikit-learn'],
+        'scikit-learn',
+        'pyregion'],
 
     ext_modules=[],
     scripts = xmm_scripts + chandra_scripts + main_executables,
