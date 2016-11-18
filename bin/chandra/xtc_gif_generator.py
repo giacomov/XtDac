@@ -22,8 +22,10 @@ from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
 
 from XtDac.DivideAndConquer import XMMWCS
 
+# Set to a non-interactive matplotlib backend
+
 import matplotlib
-matplotlib.use("tkagg")
+matplotlib.use("agg")
 
 if __name__=="__main__":
 
