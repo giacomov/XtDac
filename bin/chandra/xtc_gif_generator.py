@@ -4,6 +4,12 @@
 Generate lightcurves for each candidate given a list of candidates
 """
 
+# Set to a non-interactive matplotlib backend
+
+import matplotlib
+matplotlib.use("agg")
+
+
 import argparse
 import os
 import sys
@@ -21,11 +27,6 @@ from XtDac.ChandraUtils.run_command import CommandRunner
 from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
 
 from XtDac.DivideAndConquer import XMMWCS
-
-# Set to a non-interactive matplotlib backend
-
-import matplotlib
-matplotlib.use("agg")
 
 if __name__=="__main__":
 
