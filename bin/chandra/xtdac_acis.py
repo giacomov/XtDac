@@ -20,6 +20,9 @@ from XtDac.ChandraUtils.configuration import get_configuration
 from XtDac.ChandraUtils.work_within_directory import work_within_directory
 from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
 
+# This is just to make sure that CIAO is loaded
+import psf
+import caldb4
 
 def filter_exposure_map(exposure_map, regions_file, eventfile, new_exposure_map, resample_factor=1):
     if regions_file.find(".reg") < 0:
