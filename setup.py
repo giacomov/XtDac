@@ -53,7 +53,8 @@ setup(
         'astropy >= 1.0',
         'scipy>=0.13',
         'fitsio',
-        'pyyaml'],
+        'pyyaml',
+        'scikit-learn'],
 
     ext_modules=[],
     scripts = xmm_scripts + chandra_scripts + main_executables,
