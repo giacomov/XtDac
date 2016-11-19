@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     # Now remove [ and ] (which might be there if the user is running jobs array on PBS). They would confuse
     # CIAO executables
-    work_directory.replace("[","").replace("]","")
+    work_directory = work_directory.replace("[","").replace("]","")
 
     # Check whether we need to remove the workdir or not
 
