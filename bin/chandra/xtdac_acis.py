@@ -119,6 +119,13 @@ if __name__ == "__main__":
     # Get the configuration
     config = get_configuration(args.config_file)
 
+    # Get work directory and sanitize it
+    work_directory = sanitize_filename(config['work directory'])
+
+    # Now remove [ and ] (which might be there if the user is running jobs array on PBS). They would confuse
+    # CIAO executables
+    work_directory.replace("[","").replace("]","")
+
     # Check whether we need to remove the workdir or not
 
     remove_work_dir = bool(config['remove work directory'])
@@ -130,7 +137,7 @@ if __name__ == "__main__":
 
         for this_obsid in args.obsid:
 
-            with work_within_directory(os.path.join(config['work directory'], "__%s" % str(this_obsid)), create=True,
+            with work_within_directory(os.path.join(work_directory, "__%s" % str(this_obsid)), create=True,
                                        remove=remove_work_dir):
 
                 # Get the data package for the input data
@@ -351,4 +358,4 @@ if __name__ == "__main__":
 
         if remove_work_dir and config['work directory'] != '.':
 
-            shutil.rmtree(sanitize_filename(config['work directory']))
+            shutil.rmtree(work_directory)
