@@ -152,6 +152,30 @@ if __name__ == "__main__":
         os.remove(temp_filter)
         os.rename(temp_outfile, temp_filter)
 
+        # Copy the region file here and fix the column format, otherwise ftcopy later on will fail
+        # because some files have vector X,Y columns, while some others don't
+
+        temp_file = "__%i_%s_reg.fits" % (region_id, obsid)
+
+        shutil.copy2(region_file, "%s.gz" % temp_file)
+
+        # Unzip the file because fcollen cannot operate on zipped files
+        if os.path.exists(temp_file):
+
+            os.remove(temp_file)
+
+        runner.run("gunzip %s.gz" % temp_file, debug=True)
+
+        # Fix the columns
+
+        cmd_line = "fcollen '%s' X 1" % temp_file
+        runner.run(cmd_line, debug=True)
+
+        cmd_line = "fcollen '%s' Y 1" % temp_file
+        runner.run(cmd_line, debug=True)
+
+        temp_files.append(temp_file)
+
         ##############$$$######################
         # Check if it might have caused streaks
         #################$$$###################
@@ -177,7 +201,7 @@ if __name__ == "__main__":
 
     with open(regions_list_file, "w+") as f:
 
-        for region in region_files:
+        for region in temp_files:
             f.write("%s\n" % region)
 
     # Merge all the region files
@@ -235,7 +259,7 @@ if __name__ == "__main__":
 
         # Run the tool which produces a region file with the streak
         cmd_line = 'acis_streak_map infile=%s fovfile=%s bkgroot=__bkg ' \
-                   'regfile=%s clobber=yes msigma=3' % (outfile, fovfile, streak_region_ds9)
+                   'regfile=%s clobber=yes msigma=5' % (outfile, fovfile, streak_region_ds9)
 
         runner.run(cmd_line)
 
