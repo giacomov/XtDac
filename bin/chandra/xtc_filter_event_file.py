@@ -15,6 +15,7 @@ dmcopy "acisf00635_000N001_evt3.fits[exclude sky=region(acisf00635_000N001_r0101
 import argparse
 import glob
 import os
+import shutil
 import re
 import sys
 import warnings
@@ -24,7 +25,6 @@ import numpy as np
 
 from XtDac.ChandraUtils import find_files
 from XtDac.ChandraUtils import logging_system
-from XtDac.ChandraUtils import query_region_db
 from XtDac.ChandraUtils import sanitize_filename
 from XtDac.ChandraUtils import setup_ftools
 from XtDac.ChandraUtils.data_package import DataPackage
@@ -47,46 +47,6 @@ def is_variable(tsv_file, name_of_the_source):
     # See if associated var_flag is True (some are strings with spaces, some are bools)
     if str(tsv_data['var_flag'][idx]) == "TRUE" or str(tsv_data['var_flag'][idx]) == " TRUE":
         return True
-
-
-def cross_match(region_files_db, region_files_obsid):
-    # Get the names of all the sources contained respectively in the OBSID catalog and in the DB catalog
-
-    names_obsid = map(lambda x: re.match('(.+)/(CXOJ.+)/.+', x).groups()[1], region_files_obsid)
-
-    names_db = map(lambda x: re.match('(.+)/(CXOJ.+)/.+', x).groups()[1], region_files_db)
-
-    # Loop over all sources in the OBSID catalog, and remove them from teh DB catalog. At the end,
-    # the union between the OBSID catalog and the remaining of the DB catalog will give the
-    # complete catalog
-
-    for source in names_obsid:
-
-        try:
-
-            index = names_db.index(source)
-
-            if args.debug:
-                print names_db[index]
-
-            names_db.pop(index)
-
-        except ValueError:
-
-            warnings.warn("Source %s is in the OBSID catalog but not in the DB catalog" % source)
-
-        else:
-
-            if args.debug:
-                print region_files_db[index]
-
-            region_files_db.pop(index)
-
-    cleaned_regions = list(region_files_obsid)
-
-    cleaned_regions.extend(region_files_db)
-
-    return cleaned_regions
 
 
 if __name__ == "__main__":
@@ -143,7 +103,7 @@ if __name__ == "__main__":
 
     # Get the region files from this observation
 
-    region_files_obsid = find_files.find_files(region_dir, "*reg3.fits.gz")
+    region_files = find_files.find_files(region_dir, "*reg3.fits.gz")
 
     # Open the data package
     data_package = DataPackage(args.in_package)
@@ -162,27 +122,9 @@ if __name__ == "__main__":
 
         logger.info("Found a frame time of %s" % (frame_time))
 
-    # Query a region of 30 arcmin, which should always cover the whole Chandra field of view,
-    # to get the regions from the database
-
-    db_radius = 30.0
-
-    logger.info("Querying region database for %s arcmin around (%s, %s)..." % (db_radius, ra_pnt, dec_pnt))
-
-    region_files_db = query_region_db.query_region_db(ra_pnt, dec_pnt, db_radius, db_dir)
-
-    logger.info("Got %s regions from DB" % len(region_files_db))
-    # Now cross match the regions we got from the DB with the regions we got from this obsid
-    # We try to use the information relative to this obsid as much as possible, but if there is no
-    # info on a given source in this obsid we take it from the db
-
-    logger.info("Cross-matching region files...")
-
-    region_files = cross_match(region_files_db, region_files_obsid)
-
     n_reg = len(region_files)
 
-    logger.info("Kept %s regions" % n_reg)
+    logger.info("Found %s sources in the CSC for this obsid (%s)" % (n_reg, obsid))
 
     # Loop over the region files and prepare the corresponding region for filtering
 
@@ -191,66 +133,24 @@ if __name__ == "__main__":
     # This will be set to True if there is at least one source which might have produced streaks of out-of-time events
     might_have_streaks = False
 
+    temp_filter = "__temp_filter_evt.fits"
+
+    shutil.copy2(evtfile, temp_filter)
+
     for region_id, region_file in enumerate(region_files):
 
         if region_id % 50 == 0 or region_id == len(region_files) - 1:
             sys.stderr.write("\rProcessing region %s out of %s ..." % (region_id + 1, len(region_files)))
 
-        temp_file = '__%d_reg_revised.fits' % (region_id)
+        temp_outfile = '__temp_filter_evt_post.fits'
 
-        # Remove the file if existing
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
-
-        cmd_line = '''ftcopy '%s[SRCREG][SHAPE=="Ellipse"]' %s clobber=yes''' % (region_file, temp_file)
+        cmd_line = 'dmcopy \"%s[exclude sky=region(%s)][opt update=no]\" ' \
+                   '%s opt=all clobber=yes' % (temp_filter, region_file, temp_outfile)
 
         runner.run(cmd_line, debug=True)
 
-        # Fix the column format, if needed
-
-        cmd_line = "fcollen '%s' X 1" % temp_file
-        runner.run(cmd_line, debug=True)
-
-        cmd_line = "fcollen '%s' Y 1" % temp_file
-        runner.run(cmd_line, debug=True)
-
-        # Adjust the size of the ellipse, if this source is variable
-
-        # Get the name of the source
-        # Filenames are absolute paths like
-        # /home/giacomov/science/chandra_transients/catalog/region_files/635/CXOJ162659.0-243557/[filename]
-        # so the second-last element is the name of the source
-
-        source_name = os.path.basename(os.path.split(region_file)[-2])
-        source_name = source_name[0:3] + " " + source_name[3::]
-
-        ##########################
-        # Crossmatch with tsv file
-        ##########################
-
-        if args.adj_factor > 1:
-
-            try:
-
-                if is_variable(data_package.get('tsv').filename, source_name) == True:
-                    # open the file with "mode='update'"
-
-                    with pyfits.open(temp_file, mode='update') as reg:
-                        reg['SRCREG'].data.R = args.adj_factor * reg['SRCREG'].data.R
-
-                        # data, h = fitsio.read(temp_file, ext='SRCREG', header=True)
-                        #
-                        # data['R']  = args.adj_factor * data['R']
-                        #
-                        # fitsio.write(temp_file, data, extname='SRCREG', header=h, clobber=True)
-
-                        # adjust the size of both axis by a factor (another argument)
-
-            except ValueError:
-
-                pass
-
-        temp_files.append(temp_file)
+        os.remove(temp_filter)
+        os.rename(temp_outfile, temp_filter)
 
         ##############$$$######################
         # Check if it might have caused streaks
@@ -261,37 +161,24 @@ if __name__ == "__main__":
 
         if not might_have_streaks:
 
-            # Open the region file and get the countrate for this source
+            # Check if the source is on a streak. If it is, it means that this observation has streaks (simple ah?)
+            with pyfits.open(region_file) as f:
 
-            with pyfits.open(temp_file) as f:
-
-                # Total number of counts in the region
-                roi_cnts = f['SRCREG'].header.get("ROI_CNTS")
-
-                # Exposure
-                exposure = f['SRCREG'].header.get("EXPOSURE")
-
-                # Get the average rate
-                rate = roi_cnts / float(exposure)
-
-                # The readout time of the whole array is 3.2 s
-
-                target_rate = 1.0 / frame_time
-
-                if rate >= target_rate / 3.0:
-                    # Source might generate out-of-time (readout streak) events
+                if bool(f['SRCREG'].header.get('ONSTREAK')) == True:
 
                     might_have_streaks = True
 
+
     sys.stderr.write("Done\n")
 
-    # Write all the temp files in a text file, which will be used by dmmerge
+    # Write all region files in a text file, which will be used to create a merged file
+    # with all regions
     regions_list_file = "__all_regions_list.txt"
 
     with open(regions_list_file, "w+") as f:
 
-        for temp_file in temp_files:
-            f.write("%s\n" % temp_file)
+        for region in region_files:
+            f.write("%s\n" % region)
 
     # Merge all the region files
 
@@ -303,8 +190,7 @@ if __name__ == "__main__":
 
     runner.run(cmd_line)
 
-    # Now fix the COMPONENT column (each region must be a different component, otherwise
-    # dmcopy will crash)
+    # Now fix the COMPONENT column (each region must be a different component)
 
     fits_file = pyfits.open(all_regions_file, mode='update', memmap=False)
 
@@ -314,7 +200,7 @@ if __name__ == "__main__":
 
     # Add the region file to the output package
 
-    output_package = DataPackage(args.out_package)
+    output_package = DataPackage(args.out_package, create=True)
 
     output_package.store('all_regions', all_regions_file, "FITS file containing the regions relative to all sources "
                                                           "for this OBSID")
@@ -327,20 +213,9 @@ if __name__ == "__main__":
     # Filter by energy
     ###########################
 
-    temp_filter = '__temp__%s' % obsid
-
-    cmd_line = 'dmcopy %s[energy=%d:%d] %s opt=all clobber=yes' % (evtfile, args.emin, args.emax, temp_filter)
-
-    runner.run(cmd_line)
-
-    ###########################
-    # Filter by regions
-    ###########################
-
     outfile = '%s_filtered_evt3.fits' % obsid
 
-    cmd_line = 'dmcopy \"%s[exclude sky=region(%s)]\" ' \
-               '%s opt=all clobber=yes' % (temp_filter, all_regions_file, outfile)
+    cmd_line = 'dmcopy %s[energy=%d:%d] %s opt=all clobber=yes' % (temp_filter, args.emin, args.emax, outfile)
 
     runner.run(cmd_line)
 
