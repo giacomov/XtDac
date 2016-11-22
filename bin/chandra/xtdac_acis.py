@@ -163,7 +163,7 @@ if __name__ == "__main__":
                 # Figure out the path for the regions files for this obsid
 
                 region_dir = os.path.join(os.path.expandvars(os.path.expanduser(config['region repository'])),
-                                          '%s' % this_obsid)
+                                          '%s' % int(this_obsid.split("_")[0]))
 
                 cmd_line = "xtc_filter_event_file.py --region_dir %s --in_package %s --out_package %s " \
                            "--emin %d --emax %d " \
