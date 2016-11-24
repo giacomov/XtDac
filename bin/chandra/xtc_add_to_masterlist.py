@@ -60,10 +60,16 @@ if __name__ == "__main__":
         # read BB data into array
         bb_data = np.array(np.recfromtxt(bb_file_path, names=True), ndmin=1)
 
+        # Remove the bb file, it was copied here by the package manager
+        os.remove(bb_file_path)
+
         # number of rows of data
         bb_n = len(bb_data)
 
         if bb_n == 0:
+
+            logger.warn("No candidate found")
+
             continue
 
         # column names
