@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
         # Write data to text file
 
-        with open(args.masterfile, "w") as f:
+        with open(args.masterfile, "w+") as f:
 
             f.write("# Rank %s\n" % existing_column_names)
 
