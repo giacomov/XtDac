@@ -189,9 +189,13 @@ class DataPackage(object):
                 path = self._status['index'][tag]['path']
 
                 if not os.path.exists(path):
-                    abspath = os.path.abspath(path)
 
-                    raise IOError("File %s is contained in the index, but does not exists in %s" % (path, abspath))
+                    # Check if the .gz file exists (maybe files have been compressed)
+                    if not os.path.exists(path + ".gz"):
+
+                        abspath = os.path.abspath(path)
+
+                        raise IOError("File %s is contained in the index, but does not exists in %s" % (path, abspath))
 
     def clear(self):
         """
