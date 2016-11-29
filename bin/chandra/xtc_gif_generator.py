@@ -18,7 +18,7 @@ import astropy.io.fits as pyfits
 import matplotlib.pyplot as plt
 import seaborn as sbs
 from matplotlib.colors import LogNorm
-from astropy.convolution import convolve, Gaussian2DKernel
+from astropy.convolution import convolve_fft, convolve, Gaussian2DKernel
 from matplotlib.animation import ArtistAnimation, FFMpegWriter
 
 from XtDac.ChandraUtils.find_files import find_files
@@ -131,10 +131,12 @@ if __name__=="__main__":
         # xbins = np.linspace(xmin, xmax, 300)
         # ybins = np.linspace(ymin, ymax, 300)
 
-        psf_size_px = float(transient['PSF_sizearcsec']) * 0.05
+        conv_kernel_size = max(float(transient['PSF_sizearcsec']) / 3, 2)
 
-        xbins = np.arange(transient_x - 300 * psf_size_px, transient_x + 300 * psf_size_px, 1)
-        ybins = np.arange(transient_y - 300 * psf_size_px, transient_y + 300 * psf_size_px, 1)
+        xbins = np.arange(transient_x - 15 * conv_kernel_size, transient_x + 15 * conv_kernel_size, 1)
+        ybins = np.arange(transient_y - 15 * conv_kernel_size, transient_y + 15 * conv_kernel_size, 1)
+
+        logger.info("Image will be %i x %i pixels" % (xbins.shape[0], ybins.shape[0]))
 
         fig = plt.figure()
 
@@ -154,8 +156,8 @@ if __name__=="__main__":
             hh, X, Y = np.histogram2d(x, y, bins=[xbins, ybins])
 
             #smooth data
-            gauss_kernel = Gaussian2DKernel(stddev= psf_size_px * 6)
-            smoothed_data_gauss = convolve(hh, gauss_kernel, normalize_kernel=True)
+            gauss_kernel = Gaussian2DKernel(stddev=max(conv_kernel_size / 10.0, 2.0))
+            smoothed_data_gauss = convolve_fft(hh, gauss_kernel, normalize_kernel=True)
 
             if x.shape[0] > 0:
 

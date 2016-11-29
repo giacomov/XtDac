@@ -21,3 +21,11 @@ class CommandRunner(object):
             self._logger.info(cmd_line)
 
         subprocess.check_call(cmd_line, shell=True)
+
+        if debug:
+
+            self._logger.debug("command done")
+
+        else:
+
+            self._logger.info("command done")

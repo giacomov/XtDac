@@ -346,10 +346,10 @@ def go(args):
         miny = Y.min()
         maxy = Y.max()
 
-        corner_1 = [minx, Y[X == minx]]
-        corner_2 = [X[Y == maxy], maxy]
-        corner_3 = [X[Y == miny], miny]
-        corner_4 = [maxx, Y[X == maxx]]
+        corner_1 = [minx, Y[X == minx].max()]
+        corner_2 = [X[Y == maxy].max(), maxy]
+        corner_3 = [X[Y == miny].max(), miny]
+        corner_4 = [maxx, Y[X == maxx].max()]
 
         # Get the aim point
         ra_pointing = event_header.get('RA_PNT')
@@ -539,9 +539,14 @@ def go(args):
 
             if hwu.getName().find("ACIS")==0:
 
-                # For Chandra, let's adapt to the size of the PSF
+                # For Chandra, let's adapt to the size of the PSF (but keep a minimum size of
+                # at least 50 px)
 
-                radius = args.regionsize * 1.5 / hwu.getPixelScale()
+                box_size_arcsec = max([boxw, boxh]) * hwu.getPixelScale()
+
+                radius = max(50.0, (box_size_arcsec /2.0) * 1.5 / hwu.getPixelScale())
+
+                log.info("Radius for search region: %s px" % radius)
 
             else:
 
@@ -550,6 +555,9 @@ def go(args):
             searchRegionStr = 'physical;circle(%s,%s,%s)' % (boxx, boxy, radius)
 
             idx = (time >= interval.tstart) & (time <= interval.tstop)
+
+            assert X[idx].shape[0] > 0
+            assert Y[idx].shape[0] > 0
 
             with warnings.catch_warnings():
 
@@ -571,13 +579,16 @@ def go(args):
 
                 if hwu.getName().find("ACIS") == 0:
 
-                    # For Chandra, let's adapt to the size of the PSF
+                    # For Chandra, let's adapt to the size of the PSF, but make at least
+                    # twice the size of the pixel (remember, this is in pixels)
 
-                    r_binsize = args.regionsize / hwu.getPixelScale() / 10.0
+                    r_binsize = max(radius / 60.0, 2.0)
 
                 else:
 
                     r_binsize = 40.0 / hwu.getPixelScale() / 10.0
+
+                assert (xmax-xmin) / r_binsize > 3.0, "Not enough bins for likelihood!"
 
                 searchRegion = Likelihood.Region(xmin, xmax,
                                                  ymin, ymax,
@@ -593,7 +604,13 @@ def go(args):
 
             m = Likelihood.GlobalModel("likeModel") + iso
 
-            ls.setModel(m)
+            try:
+
+                ls.setModel(m)
+
+            except UnboundLocalError:
+
+                import pdb;pdb.set_trace()
 
             # Minimize the mlogLike to get the background level
             like0 = ls.minimize(verbose=0)
