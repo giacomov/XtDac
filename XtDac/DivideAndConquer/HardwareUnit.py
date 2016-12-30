@@ -80,7 +80,6 @@ class HardwareUnit(object):
 
 
 class ACISCCD(HardwareUnit):
-
     @staticmethod
     def get_ccd_name(id):
         # From http://cxc.harvard.edu/contrib/jcm/ncoords.ps
@@ -222,7 +221,6 @@ class ACISCCD(HardwareUnit):
 
 
 class XMMCCD(object):
-
     @staticmethod
     def get_psf(xpos, ypos, eventfile, outfile):
         """
@@ -286,7 +284,6 @@ class PNQuadrant(HardwareUnit, XMMCCD):
 
             X = f['EVENTS'].data.field("X")
             Y = f['EVENTS'].data.field("Y")
-
 
         name = "EPIC PN (quadrant %i)" % quadrant
 
