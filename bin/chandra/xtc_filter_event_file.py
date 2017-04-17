@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     n_reg = len(region_files)
 
-    logger.info("Found %s sources in the CSC for this obsid (%s)" % (n_reg, obsid))
+    logger.info("Found %s source files in the CSC for this obsid (%s)" % (n_reg, obsid))
 
     # Loop over the region files and prepare the corresponding region for filtering
 
@@ -133,24 +133,20 @@ if __name__ == "__main__":
     # This will be set to True if there is at least one source which might have produced streaks of out-of-time events
     might_have_streaks = False
 
-    temp_filter = "__temp_filter_evt.fits"
-
-    shutil.copy2(evtfile, temp_filter)
+    # Loop over the regions and fix them
 
     for region_id, region_file in enumerate(region_files):
 
         if region_id % 50 == 0 or region_id == len(region_files) - 1:
-            sys.stderr.write("\rProcessing region %s out of %s ..." % (region_id + 1, len(region_files)))
+            sys.stderr.write("\rProcessing region file %s out of %s ..." % (region_id + 1, len(region_files)))
 
-        temp_outfile = '__temp_filter_evt_post.fits'
+        # First fix the region if there are negated regions. They confuse dmcopy.
+        # Since we are removing all sources anyway, we can remove the same source more than once (because a source
+        # which overlaps with another one will be negated in the source region of the latter one)
+        with pyfits.open(region_file, mode='update') as reg_file_fits:
 
-        cmd_line = 'dmcopy \"%s[exclude sky=region(%s)][opt update=no]\" ' \
-                   '%s opt=all clobber=yes' % (temp_filter, region_file, temp_outfile)
-
-        runner.run(cmd_line, debug=True)
-
-        os.remove(temp_filter)
-        os.rename(temp_outfile, temp_filter)
+            reg_file_fits['SRCREG'].data.SHAPE = np.array(map(lambda x:x.replace("!",""),
+                                                              reg_file_fits['SRCREG'].data.SHAPE))
 
         # Copy the region file here and fix the column format, otherwise ftcopy later on will fail
         # because some files have vector X,Y columns, while some others don't
@@ -231,7 +227,24 @@ if __name__ == "__main__":
 
     # Finally filter the file
 
+    ###########################
+    # Filter by regions
+    ###########################
+
     logger.info("Filtering event file...")
+
+    # Now finally filter the event file
+    # Create a copy to avoid corrupting the event file
+    temp_filter = "__temp_filter_evt.fits"
+
+    shutil.copy2(evtfile, temp_filter)
+
+    temp_evt_no_regions = '__temp_regions_filtered_evt.fits'
+
+    cmd_line = 'dmcopy \"%s[exclude sky=region(%s)][opt update=no]\" ' \
+               '%s opt=all clobber=yes' % (temp_filter, all_regions_file, temp_evt_no_regions)
+
+    runner.run(cmd_line)
 
     ###########################
     # Filter by energy
@@ -239,7 +252,7 @@ if __name__ == "__main__":
 
     outfile = '%s_filtered_evt3.fits' % obsid
 
-    cmd_line = 'dmcopy %s[energy=%d:%d] %s opt=all clobber=yes' % (temp_filter, args.emin, args.emax, outfile)
+    cmd_line = 'dmcopy %s[energy=%d:%d] %s opt=all clobber=yes' % (temp_evt_no_regions, args.emin, args.emax, outfile)
 
     runner.run(cmd_line)
 

@@ -195,7 +195,12 @@ if __name__ == "__main__":
 
                 runner.run(cmd_line)
 
-                ccd_files = find_files.find_files('.', 'ccd*%s*fits' % this_obsid)
+                pattern = 'ccd_*_%s' % os.path.basename(out_package.get('filtered_nohot').filename)
+
+                ccd_files = find_files.find_files('.', pattern)
+
+                assert len(ccd_files) > 0, "No CCD in this observation?? This is likely a bug. " \
+                                           "I was looking for %s" % (pattern)
 
                 #######################################
                 # Run Bayesian Block on each CCD
@@ -253,33 +258,33 @@ if __name__ == "__main__":
                     ###### XTDAC #########
 
                     cmd_line = "xtdac.py -e %s -x %s -w yes -c %s -p %s -s %s -m %s -v %s --max_duration 50000 " \
-                               "--transient_pos" \
+                               "--transient_pos --min_number_of_events %i" \
                                % (ccd_file, filtered_expomap, config['number of processes'],
                                   config['type I error probability'],
-                                  config['sigma threshold'], config['multiplicity'], config['verbosity'])
+                                  config['sigma threshold'], config['multiplicity'], config['verbosity'],
+                                  config['min_number_of_events'])
 
                     runner.run(cmd_line)
 
                     #####################
 
                     # Now register the output in the output data package
+                    baseroot = os.path.splitext(ccd_file)[0]
 
-                    raw_candidate_list_file = "ccd_%s_%s_filtered_nohot_res.txt" % (ccd_number, this_obsid)
-
-                    out_package.store("ccd_%s_raw_list" % ccd_number, raw_candidate_list_file,
+                    out_package.store("ccd_%s_raw_list" % ccd_number, "%s_res.txt" % baseroot,
                                       "Unfiltered list of candidates for CCD %s (output of xtdac)" % ccd_number)
 
                     out_package.store("ccd_%s_xtdac_html" % ccd_number,
-                                      "ccd_%s_%s_filtered_nohot_res.html" % (ccd_number, this_obsid),
+                                      "%s_res.html" % baseroot,
                                       "HTML file produced by xtdac, containing the unfiltered list of candidates "
                                       "for ccd %s" % ccd_number)
 
-                    output_files = glob.glob("ccd_%s_%s_*candidate*.reg" % (ccd_number, this_obsid))
+                    output_files = glob.glob("%s_*candidate*.reg" % baseroot)
 
                     for i, output in enumerate(output_files):
                         reg_id = output.split("_")[-1].split(".reg")[0]
 
-                        out_package.store("ccd_%s_candidate_reg%s" % (ccd_number, reg_id), output,
+                        out_package.store("%s_candidate_reg%s" % (baseroot, reg_id), output,
                                           "Ds9 region file for candidate %s" % reg_id)
 
                     #######################################
@@ -291,7 +296,7 @@ if __name__ == "__main__":
                     check_hp_file = "check_hp_%s_%s.txt" % (ccd_number, this_obsid)
 
                     cmd_line = "xtc_remove_hot_pixels.py --obsid %s --evtfile %s --bbfile %s --outfile %s --debug no" \
-                               % (this_obsid, ccd_file, raw_candidate_list_file, check_hp_file)
+                               % (this_obsid, ccd_file, "%s_res.txt" % baseroot, check_hp_file)
 
                     runner.run(cmd_line)
 

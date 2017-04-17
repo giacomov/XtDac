@@ -254,8 +254,21 @@ def go(args):
 
         event_header = fitsFile['EVENTS'].header
 
-        tstart = event_header.get("TSTART")
-        tstop = event_header.get("TSTOP")
+        # Get the start of the first GTI and the stop of the last one
+        gti_starts = []
+        gti_stops = []
+        for ext in fitsFile[1:]:
+
+            if ext.header['EXTNAME'] == 'GTI':
+
+                gti_starts.append(ext.data.field("START").min())
+                gti_stops.append(ext.data.field("STOP").max())
+
+        # Since we might have randomized the times (in the Chandra pipeline), we need to make sure that the
+        # tstart is either the beginning of the first GTI or the time of the first event
+
+        tstart = min(min(gti_starts), time_.min() - 1e-3)
+        tstop = max(max(gti_stops), time_.max() + 1e-3)
 
         # # For Chandra we need to randomize the times within their frame time
         # # (this is already done in XMM data)
@@ -390,7 +403,7 @@ def go(args):
 
             theta = get_theta(x_, y_)
 
-            return psf.psfSize(pdata, 1.5, theta, 0.0, 0.9)
+            return psf.psfSize(pdata, 1.5, theta, 0.0, 0.68)
 
         # # Compute the corresponding theta
         # thetas = []
@@ -525,9 +538,10 @@ def go(args):
 
                 continue
 
-            if interval.nEvents < 3:
+            if interval.nEvents < args.min_number_of_events:
 
-                log.info("Less than 3 events (%s), discarding candidate" % interval.nEvents)
+                log.info("Less than %s events, discarding candidate with %s events" % (args.min_number_of_events,
+                                                                                       interval.nEvents))
 
                 continue
 
@@ -617,8 +631,8 @@ def go(args):
 
             # Small TS map to figure out the source position
 
-            trial_x = numpy.linspace(boxx - boxw / 2.0, boxx + boxw / 2.0, 8)
-            trial_y = numpy.linspace(boxy - boxh / 2.0, boxy + boxh / 2.0, 8)
+            trial_x = numpy.linspace(boxx - boxw / 2.0, boxx + boxw / 2.0, 16)
+            trial_y = numpy.linspace(boxy - boxh / 2.0, boxy + boxh / 2.0, 16)
 
             ra, dec = interval.interestingRegion.getCenterSkyCoordinates()
 
@@ -871,6 +885,13 @@ if __name__ == "__main__":
                         type=float,
                         default=1e9,
                         required=False)
+
+    parser.add_argument("--min_number_of_events",
+                        help="Do not consider candidate transients with less than this number of events",
+                        type=int,
+                        default=0,
+                        required=False)
+
 
     parser.add_argument("-w", "--writeRegionFiles",
                         help="Write a ds9 region file for each region with excesses?",
