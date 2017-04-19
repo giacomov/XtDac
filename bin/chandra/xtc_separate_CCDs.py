@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         ccd_file = "ccd_%s_%s" % (ccd_id, os.path.basename(args.evtfile))
 
-        cmd_line = "dmcopy %s[EVENTS][ccd_id=%s] %s clobber=yes" % (args.evtfile, ccd_id, ccd_file)
+        cmd_line = "dmcopy %s[EVENTS][ccd_id=%s] %s option=all clobber=yes" % (args.evtfile, ccd_id, ccd_file)
 
         runner.run(cmd_line)
 
