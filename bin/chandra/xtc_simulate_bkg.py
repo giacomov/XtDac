@@ -136,6 +136,9 @@ if __name__ == "__main__":
 
     new_table = astropy.table.Table.read(evtfile, 'EVENTS')
 
+    # Get the list of CCDs present
+    unique_ccds = np.unique(new_table['ccd_id'])
+
     # Pick up randomly events in the file, we will overwrite their x, y and time
     # NOTE: randint will happily reuse events (which is not a problem) so we can obtain more events than
     # the one contained in the event file
@@ -184,7 +187,7 @@ if __name__ == "__main__":
 
     with open(ccd_file_list, "w+") as f:
 
-        for ccd_id in range(10):
+        for ccd_id in unique_ccds:
 
             ccd_file = '__ccd_%i.fits' % ccd_id
 
