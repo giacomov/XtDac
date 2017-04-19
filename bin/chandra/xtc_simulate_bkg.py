@@ -219,11 +219,21 @@ if __name__ == "__main__":
     runner.run(cmd_line)
 
     # Add the GTI extension
-    start_column = pyfits.Column(name='START', format='E', unit='s', array=[tstart])
-    stop_column = pyfits.Column(name='STOP', format='E', unit='s', array=[tstop])
+    start_column = pyfits.Column(name='START', format='D', unit='s', array=[tstart])
+    stop_column = pyfits.Column(name='STOP', format='D', unit='s', array=[tstop])
 
     gti_ext = pyfits.BinTableHDU.from_columns(pyfits.ColDefs([start_column, stop_column]))
     gti_ext.name = "GTI"
+
+    keywords = {'TSTART': tstart,
+                'TSTOP': tstop,
+                'MISSION':  'AXAF    ',
+                'TELESCOP': 'CHANDRA ',
+                'INSTRUME': 'ACIS    ',
+                'TIMESYS':  'TT      ',
+                'TIMEUNIT': 's       '}
+
+    [gti_ext.header.update(key, value) for key,value in keywords.items()]
 
     with pyfits.open(outfile, mode='update') as fitsf:
 
