@@ -69,6 +69,9 @@ if __name__ == "__main__":
 
     parser.add_argument("-o", "--obsid", help="Observation ID Numbers", type=str, required=True, nargs="+")
 
+    parser.add_argument('--simulate', help='If set, a background-only dataset is simulated from the observation and '
+                                           'the algorithm is run on the simulated dataset', action='store_true')
+
     # parser.add_argument('-r', '--region_repo', help="Path to the repository of region files",
     #                     type=str, required=True)
 
@@ -143,18 +146,67 @@ if __name__ == "__main__":
                 # Get the data package for the input data
                 data_package = DataPackage(os.path.join(config['data repository'], str(this_obsid)))
 
+                # If we are in simulation mode, simulate a new dataset and create a new data package to be used
+                # instead
+                if args.simulate:
+
+                    logger.info("Simulating data...")
+
+                    # NOTE: .get() will copy the files here
+                    bkgmap = data_package.get("bkgmap")
+                    asolfile = data_package.get("asol")
+                    evtfile = data_package.get('evt3')
+
+                    sim_evt_file = "%s_sim.fits" % (os.path.splitext(os.path.basename(evtfile.filename))[0])
+
+                    cmd_line = "xtc_simulate_bkg.py --bkgmap %s --evtfile %s --asolfile %s " \
+                               "--outfile %s" % (bkgmap.filename, evtfile.filename, asolfile.filename, sim_evt_file)
+
+                    runner.run(cmd_line)
+
+                    logger.info("Creating new data package")
+
+                    sim_dir = '_simulations'
+
+                    if os.path.exists(sim_dir):
+
+                        shutil.rmtree(sim_dir)
+
+                    os.makedirs(sim_dir)
+
+                    # Override the input data package with a new one
+
+                    data_package = data_package.copy_to(sim_dir)
+
+                    # Make temporarily read-write so we can update the event file
+
+                    data_package.read_only = False
+
+                    # Override in the new one the event file (so all subsequent commands will use that one)
+                    data_package.store("evt3", sim_evt_file, "Simulated event file", force=True)
+
+                    # Restore read-only status
+
+                    data_package.read_only = True
+
+                    # Make a specific output package (so we don't risk to overwrite an existing output package for real
+                    # data)
+                    out_package = DataPackage("%s_sim" % str(this_obsid), create=True)
+
+                else:
+
+                    out_package = DataPackage(str(this_obsid), create=True)
+
+                # Make sure the output package is empty, otherwise emtpy it
+                out_package.clear()
+
+                # Start the processing
+
                 # NOTE: .get() will copy the file here
 
                 evtfile = data_package.get('evt3')
                 tsvfile = data_package.get('tsv')
                 expfile = data_package.get('exp3')
-
-                # Prepare output package
-
-                out_package = DataPackage(str(this_obsid), create=True)
-
-                # Make sure it is empty, otherwise emtpy it
-                out_package.clear()
 
                 #######################################
                 # Filtering
@@ -262,7 +314,7 @@ if __name__ == "__main__":
                                % (ccd_file, filtered_expomap, config['number of processes'],
                                   config['type I error probability'],
                                   config['sigma threshold'], config['multiplicity'], config['verbosity'],
-                                  config['min_number_of_events'])
+                                  config['min number of events'])
 
                     runner.run(cmd_line)
 
