@@ -48,18 +48,27 @@ def worker(this_obsid):
             expmaps = find_files.find_files(os.getcwd(), "%s*exp3.fits*" % name_root)
             fovs = find_files.find_files(os.getcwd(), "%s*fov3.fits*" % name_root)
             tsvfiles = find_files.find_files(os.getcwd(), "%s.tsv" % obsid_identifier)
+            bkgmaps = find_files.find_files(os.getcwd(), "*%s*bkgimg3.fits*" % this_obsid)
+            asol_files = find_files.find_files(os.getcwd(), '*asol*.fits.gz')
 
             assert len(expmaps) == 1, "Wrong number of exposure maps for event file %s" % evtfile
             assert len(fovs) == 1, "Wrong number of fov files for event file %s" % evtfile
             assert len(tsvfiles) == 1, "Wrong number of tsv files for obsid %s" % this_obsid
+            assert len(bkgmaps) == 1, "Wrong number of bkg files for obsid %s" % this_obsid
+            assert len(asol_files) == 1, "Wrong number of asol files for obsid %s" % this_obsid
+
 
             tsvfile = tsvfiles[0]
             expmap = expmaps[0]
             fov = fovs[0]
+            bkgmap = bkgmaps[0]
+            asol = asol_files[0]
 
             logger.info("Found tsv file: %s" % tsvfile)
             logger.info("Found expmap: %s" % expmap)
             logger.info("Found fov file: %s" % fov)
+            logger.info("Found bkg map file: %s" % bkgmap)
+            logger.info("Found asol file: %s" % asol)
 
             logger.info("Creating data package %s" % obsid_identifier)
 
@@ -69,6 +78,8 @@ def worker(this_obsid):
             data_package.store("tsv", tsvfile, "TSV file from the CSC", move=True)
             data_package.store("exp3", expmap, "Exposure map (Level 3) from the CSC", move=True)
             data_package.store("fov3", fov, "FOV file (Level 3) from the CSC", move=True)
+            data_package.store("bkgmap", bkgmap, "Background map (Level 3) from the CSC", move=True)
+            data_package.store("asol", asol, "Aspect solution file from the CSC", move=True)
 
             logger.info("done")
 

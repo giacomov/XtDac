@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
             # Download exposure map
 
-            cmd_line = ("obsid_search_csc obsid=%d download=all outfile=%d.tsv filetype=exp,evt,fov "
+            cmd_line = ("obsid_search_csc obsid=%d download=all outfile=%d.tsv filetype=exp,evt,fov,bkgimg "
                         "mode=h clobber=yes verbose=0 "
                         "columns=m.ra,m.dec,o.theta,m.extent_flag,m.var_flag"
                         % (obsid, obsid))
@@ -83,6 +83,7 @@ if __name__ == "__main__":
         # get paths of files
         evt3_files = find_files.find_files(work_dir, '*%s*evt3.fits.gz' % obsid)
         tsv_files = find_files.find_files(work_dir, '*%s*.tsv' % obsid)
+        bkg_files = find_files.find_files(work_dir, '*%s*bkgimg3.fits*' % obsid)
 
         if len(evt3_files) == 0:
 
@@ -109,7 +110,7 @@ if __name__ == "__main__":
 
             logger.info("Found %s observation segments" % len(evt3_files))
 
-            for evt3, pbk, asol in zip(evt3_files, pbk_files, asol_files):
+            for evt3, pbk, asol, bkgmap in zip(evt3_files, pbk_files, asol_files, bkg_files):
 
                 # Get the root of the evt3 file name
                 # The evt3 file name is like acisf01578_001N001_evt3.fits.gz,
@@ -151,7 +152,7 @@ if __name__ == "__main__":
 
                 # move files
 
-                for this_file in [evt3, exp, fov]:
+                for this_file in [evt3, exp, fov, bkgmap, asol]:
 
                     os.rename(this_file, os.path.basename(this_file))
 
