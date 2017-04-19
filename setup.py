@@ -58,7 +58,9 @@ setup(
         'pyregion',
         'numexpr',
         'matplotlib',
-        'iminuit'],
+        'iminuit',
+        'pandas',
+        'seaborn'],
 
     ext_modules=[],
     scripts = xmm_scripts + chandra_scripts + main_executables,
