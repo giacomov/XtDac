@@ -31,7 +31,7 @@ energy max: 7000
 adjustment factor: 1.3
 
 # Minimum number of events to consider a transient
-min_number_of_events: 10
+min number of events: 10
 
 # Number of cores to use for processing
 number of processes: 1
