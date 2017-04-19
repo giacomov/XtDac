@@ -233,7 +233,9 @@ if __name__ == "__main__":
                 'TIMESYS':  'TT      ',
                 'TIMEUNIT': 's       '}
 
-    [gti_ext.header.update((key, value)) for key,value in keywords.items()]
+    for key in keywords:
+        
+        gti_ext.header[key] = keywords[key]
 
     with pyfits.open(outfile, mode='update') as fitsf:
 
