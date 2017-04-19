@@ -55,7 +55,10 @@ setup(
         'fitsio',
         'pyyaml',
         'scikit-learn',
-        'pyregion'],
+        'pyregion',
+        'numexpr',
+        'matplotlib',
+        'iminuit'],
 
     ext_modules=[],
     scripts = xmm_scripts + chandra_scripts + main_executables,
