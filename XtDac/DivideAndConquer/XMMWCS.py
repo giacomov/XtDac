@@ -38,11 +38,26 @@ class XMMWCS(object):
         else:
 
             # Chandra
+            try:
 
-            self.wcs.wcs.crpix = [header['TCRPX11'], header['TCRPX12']]
-            self.wcs.wcs.cdelt = [header['TCDLT11'], header['TCDLT12']]
-            self.wcs.wcs.crval = [header['TCRVL11'], header['TCRVL12']]
-            self.wcs.wcs.ctype = [header['TCTYP11'], header['TCTYP12']]
+                self.wcs.wcs.crpix = [header['TCRPX11'], header['TCRPX12']]
+                self.wcs.wcs.cdelt = [header['TCDLT11'], header['TCDLT12']]
+                self.wcs.wcs.crval = [header['TCRVL11'], header['TCRVL12']]
+                self.wcs.wcs.ctype = [header['TCTYP11'], header['TCTYP12']]
+
+            except KeyError:
+
+                # Try harder, by looking first where the 'x' and 'y' columns are
+                # (in a simulated file they could be in a different position)
+                x_pos = int(filter(lambda x: str(x[1]).replace(" ", "") == "x",
+                                   header.items())[0][0].replace("TTYPE", ""))
+                y_pos = int(filter(lambda x: str(x[1]).replace(" ", "") == "y",
+                                   header.items())[0][0].replace("TTYPE", ""))
+
+                self.wcs.wcs.crpix = [header['TCRPX%i' % x_pos], header['TCRPX%i' % y_pos]]
+                self.wcs.wcs.cdelt = [header['TCDLT%i' % x_pos], header['TCDLT%i' % y_pos]]
+                self.wcs.wcs.crval = [header['TCRVL%i' % x_pos], header['TCRVL%i' % y_pos]]
+                self.wcs.wcs.ctype = [header['TCTYP%i' % x_pos], header['TCTYP%i' % y_pos]]
 
             self.rotation = header['ROLL_PNT']
 
