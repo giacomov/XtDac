@@ -191,8 +191,8 @@ if __name__ == "__main__":
 
             ccd_file = '__ccd_%i.fits' % ccd_id
 
-            cmd_line = 'dmcopy "%s[sky=region(%s[ccd_id=%i])]" %s clobber=yes' % (temp_evt_file, region_file,
-                                                                                  ccd_id, ccd_file)
+            cmd_line = 'dmcopy "%s[sky=region(%s[ccd_id=%i])]" %s clobber=yes option=all' % (temp_evt_file, region_file,
+                                                                                             ccd_id, ccd_file)
 
             runner.run(cmd_line)
 
@@ -218,16 +218,16 @@ if __name__ == "__main__":
 
     runner.run(cmd_line)
 
-    # Add the GTI extension
-    start_column = pyfits.Column(name='START', format='E', unit='s', array=[tstart])
-    stop_column = pyfits.Column(name='STOP', format='E', unit='s', array=[tstop])
-
-    gti_ext = pyfits.BinTableHDU.from_columns(pyfits.ColDefs([start_column, stop_column]))
-    gti_ext.name = "GTI"
-
-    with pyfits.open(outfile, mode='update') as fitsf:
-
-        fitsf.append(gti_ext)
+    # # Add the GTI extension
+    # start_column = pyfits.Column(name='START', format='E', unit='s', array=[tstart])
+    # stop_column = pyfits.Column(name='STOP', format='E', unit='s', array=[tstop])
+    #
+    # gti_ext = pyfits.BinTableHDU.from_columns(pyfits.ColDefs([start_column, stop_column]))
+    # gti_ext.name = "GTI"
+    #
+    # with pyfits.open(outfile, mode='update') as fitsf:
+    #
+    #     fitsf.append(gti_ext)
 
     # Remove temporary files
     for filename in temporary_files:
