@@ -405,7 +405,16 @@ if __name__ == "__main__":
                 # Move package to output repository
 
                 logger.info("Move the results to the output repository %s" % config['output repository'])
-                out_package.copy_to(config['output repository'])
+
+                out_repo_dir = sanitize_filename(config['output repository'])
+
+                if not os.path.exists(out_repo_dir):
+
+                    logger.info("Creating directory %s" % out_repo_dir)
+
+                    os.makedirs(out_repo_dir)
+
+                out_package.copy_to(out_repo_dir)
     except:
 
         raise
