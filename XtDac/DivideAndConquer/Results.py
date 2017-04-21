@@ -180,7 +180,10 @@ class Summary(object):
     
     fig                       = plt.figure(**kwargs)
     sub                       = fig.add_subplot(111)
-    sub.step(leftEdges,rates, where='post')
+
+    rr = numpy.append(rates, 0)
+
+    sub.step(edges - edges[0], rr, where='post')
     sub.set_xlabel("Mission Elapsed Time (s)")
     sub.set_ylabel("Rate")
     sub.set_title("Light curve for the whole HWU")

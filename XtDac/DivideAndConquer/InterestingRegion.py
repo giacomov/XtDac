@@ -104,10 +104,14 @@ class InterestingRegion(object):
 
         figure = plt.figure(**kwargs)
         sub = figure.add_subplot(111)
-        sub.bar(self.leftEdges, self.rates, self.widths, color='white', edgecolor='black')
+        #sub.bar(self.leftEdges, self.rates, self.widths, color='white', edgecolor='black')
+
+        tt = self.intervals - self.intervals[0]
+        sub.bar(tt[:-1], self.rates, self.widths, align='edge')
         sub.set_xlabel("Mission Elapsed Time (s)")
         sub.set_ylabel("Rate")
         sub.set_title("Detrended light curve")
+
         return figure
 
     pass
