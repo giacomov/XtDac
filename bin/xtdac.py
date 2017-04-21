@@ -264,47 +264,11 @@ def go(args):
                 gti_starts.append(ext.data.field("START").min())
                 gti_stops.append(ext.data.field("STOP").max())
 
-        # Since we might have randomized the times (in the Chandra pipeline), we need to make sure that the
-        # tstart is either the beginning of the first GTI or the time of the first event
+        # Since we might have randomized the times (in the Chandra pipeline,  in the xtc_filter_event_file script),
+        #  we need to make sure that the tstart is either the beginning of the first GTI or the time of the first event
 
         tstart = min(min(gti_starts), time_.min() - 1e-3)
         tstop = max(max(gti_stops), time_.max() + 1e-3)
-
-        # # For Chandra we need to randomize the times within their frame time
-        # # (this is already done in XMM data)
-        #
-        # if hwu.getName().find("ACIS") == 0:
-        #
-        #     # Gather the frame time from the header
-        #
-        #     frame_time = event_header['TIMEDEL']
-        #
-        #     log.info("Found a frame time of %s for this %s data" % (frame_time, hwu.getName()))
-        #
-        #     # Events are assigned a time stamp corresponding to the -mid- point of the
-        #     # exposure
-        #
-        #     # Get a random number between -frame_time/2 and +frame_time/2.0 for each event
-        #
-        #     dt = numpy.random.uniform(-frame_time / 2.0, + frame_time / 2.0, time.shape[0])
-        #
-        #     # Add those random numbers to the time stamps of the events
-        #
-        #     time += dt
-        #
-        #     # Of course the previous passage makes the event non time-ordered anymore,
-        #     # so let's sort them
-        #
-        #     time.sort()
-        #
-        #     # Check if we went after the stop of before the start time
-        #     if time.min() < tstart:
-        #
-        #         time[numpy.argmin(time)] = tstart + 1e-3
-        #
-        #     if time.max() > tstop:
-        #
-        #         time[numpy.argmax(time)] = tstop - 1e-3
 
         # Now make arrays read-only so they will never be copied
 
@@ -404,33 +368,6 @@ def go(args):
             theta = get_theta(x_, y_)
 
             return psf.psfSize(pdata, 1.5, theta, 0.0, 0.68)
-
-        # # Compute the corresponding theta
-        # thetas = []
-        #
-        # for point in coords:
-        #
-        #     c1 = SkyCoord(ra=point[0] * u.degree, dec=point[1] * u.degree, frame=system.lower())
-        #
-        #     this_theta = c1.separation(pointing)
-        #
-        #     # Store it in arcmin
-        #
-        #     thetas.append(this_theta.to(u.arcmin).value)
-        #
-        # # Get the size of the psf at the minimum and maximum theta
-        # # for an energy of 1.5 keV
-        #
-        # psf_size_max = psf.psfSize(pdata, 1.5, max(thetas), 0.0, 0.9)
-        #
-        # log.info("Minimum theta: %s" % min(thetas))
-        # log.info("Minimum 90 percent PSF EEF: %s" % psf.psfSize(pdata, 1.5, min(thetas), 0.0, 0.9))
-        # log.info("Maximum theta: %s" % max(thetas))
-        # log.info("Maximum 90 percent PSF EEF: %s" % psf_size_max)
-        #
-        # args.regionsize = psf_size_max
-        #
-        # log.info("Auto-probed size for boxes: %s" % args.regionsize)
 
         gg = GridGen.GridGenChandra(hwu)
 
