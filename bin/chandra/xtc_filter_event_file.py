@@ -70,10 +70,9 @@ if __name__ == "__main__":
                         help="If region files need to be adjusted, what factor to increase axes of ellipses by",
                         type=float, required=True)
 
-    parser.add_argument("--randomize_time", help='Whether to randomize the arrival time within the time frames',
-                        required=True, dest='randomize_time', action='store_true')
-
-    parser.set_defaults(randomize_time=True)
+    parser.add_argument("--simulation_mode", help='In sim. mode the arrival times are not randomized within a time '
+                                                  'frame, and streaks are not removed.',
+                        required=False, action='store_true')
 
     # assumption = all level 3 region files and event file are already downloaded into same directory
 
@@ -262,7 +261,7 @@ if __name__ == "__main__":
 
     # If we might have streaks, run the tool which generates the region for the streaks
 
-    if might_have_streaks:
+    if might_have_streaks and not args.simulation_mode:
 
         logger.warn("We might have readout streak. Cleaning them out...")
 
@@ -327,17 +326,19 @@ if __name__ == "__main__":
     # Randomize time             #
     ##############################
 
-    with pyfits.open(outfile, mode='update') as f:
+    if not args.simulation_mode:
 
-        time = f['EVENTS'].data.time
+        with pyfits.open(outfile, mode='update') as f:
 
-        logger.info("Randomizing arrival times within time frameof %s s..." % frame_time)
+            time = f['EVENTS'].data.time
 
-        deltas = np.random.uniform(-frame_time/2.0, frame_time/2.0, time.shape[0])
+            logger.info("Randomizing arrival times within time frame of %s s..." % frame_time)
 
-        time += deltas
+            deltas = np.random.uniform(-frame_time/2.0, frame_time/2.0, time.shape[0])
 
-        f["EVENTS"].data.time[:] = time
+            time += deltas
+
+            f["EVENTS"].data.time[:] = time
 
     # Now sort the file
     cmd_line = "fsort %s[EVENTS] TIME heap" % outfile

@@ -71,6 +71,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--simulate', help='If set, a background-only dataset is simulated from the observation and '
                                            'the algorithm is run on the simulated dataset', action='store_true')
+    parser.add_argument('--simulated_data', help='set this if you are using simulated data from a previous call of '
+                                                 'xtdac_acis with --simulate',
+                        action='store_true')
 
     # parser.add_argument('-r', '--region_repo', help="Path to the repository of region files",
     #                     type=str, required=True)
@@ -217,11 +220,24 @@ if __name__ == "__main__":
                 region_dir = os.path.join(os.path.expandvars(os.path.expanduser(config['region repository'])),
                                           '%s' % int(this_obsid.split("_")[0]))
 
+                # If we are simulating, there is no need to randomize the time (the simulation does not discretize
+                # the arrival times into frames). Otherwise, if we are dealing with true data, we need to randomize
+                # the arrival time within each frame time
+
+                if args.simulate or args.simulated_data:
+
+                    additional_options = '--simulation_mode'
+
+                else:
+
+                    additional_options = ''
+
                 cmd_line = "xtc_filter_event_file.py --region_dir %s --in_package %s --out_package %s " \
                            "--emin %d --emax %d " \
-                           "--adj_factor %s --randomize_time" \
+                           "--adj_factor %s %s" \
                            % (region_dir, data_package.location, out_package.location,
-                              config['energy min'], config['energy max'], config['adjustment factor'])
+                              config['energy min'], config['energy max'], config['adjustment factor'],
+                              additional_options)
 
                 runner.run(cmd_line)
 

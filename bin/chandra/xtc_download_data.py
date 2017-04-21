@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 import multiprocessing
+import shutil
 
 from XtDac.ChandraUtils import find_files
 from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
@@ -72,7 +73,9 @@ def worker(this_obsid):
 
             logger.info("Creating data package %s" % obsid_identifier)
 
-            data_package = DataPackage(obsid_identifier, create=True)
+            data_package_dir = os.path.join(sanitize_filename(config['data repository']), obsid_identifier)
+
+            data_package = DataPackage(data_package_dir, create=True)
 
             data_package.store("evt3", evtfile, "Event file (Level 3) from the CSC", move=True)
             data_package.store("tsv", tsvfile, "TSV file from the CSC", move=True)
@@ -118,22 +121,36 @@ if __name__ == "__main__":
     data_repository = sanitize_filename(config['data repository'])
     region_repository = sanitize_filename(config['region repository'])
 
-    with work_within_directory(data_repository):
+    data_repository_temp = os.path.join(data_repository, '__temp')
+
+    with work_within_directory(data_repository_temp, create=True):
 
         # Download files
 
-        pool = multiprocessing.Pool(args.n_processes)
+        if args.n_processes > 1:
 
-        try:
+            pool = multiprocessing.Pool(args.n_processes)
 
-            for i, _ in enumerate(pool.imap(worker, args.obsid)):
+            try:
 
-                sys.stderr.write("\n\n%i out of %s\n\n" % (i+1, len(args.obsid)))
+                for i, _ in enumerate(pool.imap(worker, args.obsid)):
 
-        except:
+                    sys.stderr.write("\n\n%i out of %s\n\n" % (i+1, len(args.obsid)))
 
-            raise
+            except:
 
-        finally:
+                raise
 
-            pool.close()
+            finally:
+
+                pool.close()
+
+        else:
+
+            for i, this_obsid in enumerate(args.obsid):
+
+                sys.stderr.write("\n\n%i out of %s\n\n" % (i + 1, len(args.obsid)))
+
+                worker(this_obsid)
+
+    shutil.rmtree(data_repository_temp)
