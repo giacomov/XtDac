@@ -8,6 +8,7 @@ transients to master list
 import argparse
 import os
 import sys
+import random
 
 import astropy.io.fits as pyfits
 from astropy import wcs as pywcs
@@ -53,7 +54,14 @@ if __name__ == "__main__":
 
     logger.info("Reading background image %s..." % bkgfile)
 
+    # Read background image
+
     data, header = pyfits.getdata(bkgfile, 0, header=True)
+
+    # Get the frame time
+    frame_time = header["EXPTIME"]
+
+    logger.info("Found a frame time of %s s" % frame_time)
 
     # Build WCS to convert back and forth from image coordinates to X,Y coordinates
 
@@ -63,16 +71,14 @@ if __name__ == "__main__":
     wcs.wcs.crval = [header['CRVAL1P'], header['CRVAL2P']]
     wcs.wcs.ctype = [header['CTYPE1P'], header['CTYPE2P']]
 
-    # Generate a new background image with Poisson noise
-
-    logger.info("Generating simulated dataset...")
-
-    new_data = np.random.poisson(data)
-
     # Get start and stop of the observation, and its duration
     tstart = header['TSTART']
     tstop = header['TSTOP']
     duration = tstop - tstart
+
+    # Generate a new background image with Poisson noise
+
+    logger.info("Generating simulated dataset...")
 
     # Now unravel the data creating an unbinned event list
 
@@ -87,9 +93,7 @@ if __name__ == "__main__":
             # NOTE: most of the pixels in the new_data image area actually 0
             # (there is a large padding around the image)
 
-            n_events_to_generate = new_data[i, j]
-
-            if n_events_to_generate > 0:
+            if data[i, j] > 0:
 
                 # Convert from image coordinates to physical coordinates (i.e., X and Y)
 
@@ -102,7 +106,23 @@ if __name__ == "__main__":
 
                 rate = data[i, j] / duration
 
-                new_times = np.cumsum(np.random.exponential(1.0 / rate, n_events_to_generate)) + tstart
+                # Generate arrival times
+
+                t = tstart
+
+                new_times = []
+
+                while True:
+
+                    t += -np.log(1.0 - random.random()) / rate
+
+                    if t < tstop:
+
+                        new_times.append(t)
+
+                    else:
+
+                        break
 
                 # Append the new times and the new X,Y coordinates
 
@@ -111,8 +131,8 @@ if __name__ == "__main__":
                 # Note the swap in xy (1 is x and 0 is y). This is not an error. It is required to
                 # match the WCS in the event file
 
-                xs.extend([xy[1]] * n_events_to_generate)
-                ys.extend([xy[0]] * n_events_to_generate)
+                xs.extend([xy[1]] * len(new_times))
+                ys.extend([xy[0]] * len(new_times))
 
     # Transform into arrays
 
@@ -120,14 +140,7 @@ if __name__ == "__main__":
     xs = np.array(xs)
     ys = np.array(ys)
 
-    assert np.sum(new_data) == xs.shape[0]
-
-    # Make sure we stay within tstart and tstop
-
-    idx = (ts >= tstart) & (ts <= tstop)
-    ts = ts[idx]
-    xs = xs[idx]
-    ys = ys[idx]
+    logger.info("Generated %i events (expected %.2f)" % (ts.shape[0], np.sum(data)))
 
     # Now read in the event file and substitute the x,y and time values of a subsample of events
     # This way we will keep a realistic spectrum for the background
@@ -154,6 +167,9 @@ if __name__ == "__main__":
     new_table['x'] = xs
     new_table['y'] = ys
     new_table['time'] = ts
+
+    # Also override the energy column with a uniform distribution
+    new_table['energy'] = np.random.uniform(500.0, 7000.0, xs.shape[0])
 
     # Now write them in a temporary file
 
