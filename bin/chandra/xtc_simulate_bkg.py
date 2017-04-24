@@ -253,10 +253,14 @@ if __name__ == "__main__":
 
         gti_ext.header[key] = keywords[key]
 
-    with pyfits.open(outfile, mode='update') as fitsf:
+    with pyfits.open(outfile) as fitsf:
 
         fitsf.append(gti_ext)
-
+        fitsf.writeto('__last.fits', clobber=True)
+    
+    os.remove(outfile)
+    os.rename('__last.fits', outfile)
+    
     # Remove temporary files
     for filename in temporary_files:
 
