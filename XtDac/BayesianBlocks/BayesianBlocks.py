@@ -247,7 +247,9 @@ def bayesian_blocks(tt, ttstart, ttstop, p0, bkgIntegralDistr=None, myLikelihood
     else:
 
         # eq. 21 from Scargle 2012
-        priors = 4 - np.log(73.53 * p0 * np.power(np.arange(1, N + 1), -0.478))
+        #priors = 4 - np.log(73.53 * p0 * np.power(np.arange(1, N + 1), -0.478))
+
+        priors = [4 - np.log(73.53 * p0 * N**(-0.478))] * N
     pass
 
     x = np.ones(N)
