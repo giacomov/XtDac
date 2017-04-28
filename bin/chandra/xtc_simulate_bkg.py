@@ -80,6 +80,15 @@ if __name__ == "__main__":
 
     logger.info("Generating simulated dataset...")
 
+    # First, if a random seed is provided, use that
+    if os.environ.get("XTC_SIM_SEED") is not None:
+
+        seed = int(os.environ.get("XTC_SIM_SEED"))
+
+        logger.info("Setting seed to %i" % seed)
+
+        random.seed(seed)
+
     # Now unravel the data creating an unbinned event list
 
     xs = []
