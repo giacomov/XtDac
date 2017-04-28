@@ -159,11 +159,13 @@ if __name__ == "__main__":
                     bkgmap = data_package.get("bkgmap")
                     asolfile = data_package.get("asol")
                     evtfile = data_package.get('evt3')
+                    expfile = data_package.get('exp3')
 
                     sim_evt_file = "%s_sim.fits" % (os.path.splitext(os.path.basename(evtfile.filename))[0])
 
-                    cmd_line = "xtc_simulate_bkg.py --bkgmap %s --evtfile %s --asolfile %s " \
-                               "--outfile %s" % (bkgmap.filename, evtfile.filename, asolfile.filename, sim_evt_file)
+                    cmd_line = "xtc_simulate_bkg.py --bkgmap %s --expomap %s --evtfile %s --asolfile %s " \
+                               "--outfile %s" % (bkgmap.filename, expfile.filename, evtfile.filename,
+                                                 asolfile.filename, sim_evt_file)
 
                     runner.run(cmd_line)
 
@@ -187,6 +189,10 @@ if __name__ == "__main__":
 
                     # Override in the new one the event file (so all subsequent commands will use that one)
                     data_package.store("evt3", sim_evt_file, "Simulated event file", force=True)
+
+                    # Overrite in the new one the exposure map that has been modified (so all subsequent commands will
+                    # use that one)
+                    data_package.store("exp3", expfile.filename, "Simulated exposure map", force=True)
 
                     # Restore read-only status
 

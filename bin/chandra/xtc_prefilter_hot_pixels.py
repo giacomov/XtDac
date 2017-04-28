@@ -96,84 +96,91 @@ if __name__ == "__main__":
 
     with pyfits.open(eventfile, mode='update', memmap=False) as fits_file:
 
-        # Get unique CCD ids
-        ccds = np.unique(fits_file['EVENTS'].data.ccd_id)
-
-        # Get frame time
-
-        tstart = fits_file['EVENTS'].header['TSTART']
-        tstop = fits_file['EVENTS'].header['TSTOP']
-
         # Get the data extension
 
         data = fits_file['EVENTS'].data
 
-        for ccd in ccds:
+        # If this is a simulated data, there is no need for this processing
+        if fits_file['EVENTS'].header.get("XTDACSIM"):
 
-            logger.info("Processing CCD %s" % ccd)
+            logger.info("This is a simulated file. Skipping hot pixels preprocessing...")
 
-            # Select all events in this CCD
-            ccd_idx = (data.ccd_id == ccd)
+        else:
 
-            chipx = data.chipx[ccd_idx]
-            chipy = data.chipy[ccd_idx]
-            time = data.time[ccd_idx]
+            # Get unique CCD ids
+            ccds = np.unique(fits_file['EVENTS'].data.ccd_id)
 
-            coords = np.vstack([chipx, chipy]).T
+            # Get frame time
 
-            ucoords = unique_rows(coords)
+            tstart = fits_file['EVENTS'].header['TSTART']
+            tstop = fits_file['EVENTS'].header['TSTOP']
 
-            # For each non-empty pixel do a bayesian block analysis
-            for i, (cx, cy) in enumerate(ucoords):
+            for ccd in ccds:
 
-                if (i+1) % 10000 == 0:
+                logger.info("Processing CCD %s" % ccd)
 
-                    logger.info("%s out of %s" % (i+1, coords.shape[0]))
+                # Select all events in this CCD
+                ccd_idx = (data.ccd_id == ccd)
 
-                time_stamps = data.time[ccd_idx & (data.chipx == cx) & (data.chipy == cy)]
+                chipx = data.chipx[ccd_idx]
+                chipy = data.chipy[ccd_idx]
+                time = data.time[ccd_idx]
 
-                # Do not try if there are only 5 events in the whole observation in this pixel
+                coords = np.vstack([chipx, chipy]).T
 
-                if time_stamps.shape[0] < 5:
+                ucoords = unique_rows(coords)
 
-                    continue
+                # For each non-empty pixel do a bayesian block analysis
+                for i, (cx, cy) in enumerate(ucoords):
 
-                blocks = bayesian_blocks(time_stamps, tstart, tstop, 1e-3)
+                    if (i+1) % 10000 == 0:
 
-                if len(blocks) > 2:
+                        logger.info("%s out of %s" % (i+1, coords.shape[0]))
 
-                    for t1,t2 in zip(blocks[:-1], blocks[1:]):
+                    time_stamps = data.time[ccd_idx & (data.chipx == cx) & (data.chipy == cy)]
 
-                        duration = t2 - t1
+                    # Do not try if there are only 5 events in the whole observation in this pixel
 
-                        if duration < args.max_duration:
+                    if time_stamps.shape[0] < 5:
 
-                            # Check if this is a bright pixel
+                        continue
 
-                            # Select all events within this time interval
-                            time_idx = (time >= t1) & (time <= t2)
+                    blocks = bayesian_blocks(time_stamps, tstart, tstop, 1e-3)
 
-                            # Select all events in this time interval in the surrounding pixels
+                    if len(blocks) > 2:
 
-                            d = np.sqrt((chipx-float(cx))**2 + (chipy-float(cy))**2)
+                        for t1,t2 in zip(blocks[:-1], blocks[1:]):
 
-                            this_idx = d == 0
+                            duration = t2 - t1
 
-                            neighbor_idx = time_idx & (d < 2) & ~this_idx
+                            if duration < args.max_duration:
 
-                            if np.sum(neighbor_idx) == 0:
+                                # Check if this is a bright pixel
 
-                                # No events in surrounding pixels. This is likely a hot pixel
-                                logger.info(" @ (%s, %s), interval: %1.f - %.1f s "
-                                            "(%.1f s, %i evts)" % (cx, cy, t1, t2, duration, np.sum(this_idx)))
+                                # Select all events within this time interval
+                                time_idx = (time >= t1) & (time <= t2)
 
-                                # Flag the events
-                                events_idx = ccd_idx & (data.chipx == cx) & (data.chipy == cy) & \
-                                             (data.time >= t1) & (data.time <= t2)
+                                # Select all events in this time interval in the surrounding pixels
 
-                                data.pha[events_idx] = -1
+                                d = np.sqrt((chipx-float(cx))**2 + (chipy-float(cy))**2)
 
-                                tot_hot_pixels += 1
+                                this_idx = d == 0
+
+                                neighbor_idx = time_idx & (d < 2) & ~this_idx
+
+                                if np.sum(neighbor_idx) == 0:
+
+                                    # No events in surrounding pixels. This is likely a hot pixel
+                                    logger.info(" @ (%s, %s), interval: %1.f - %.1f s "
+                                                "(%.1f s, %i evts)" % (cx, cy, t1, t2, duration, np.sum(this_idx)))
+
+                                    # Flag the events
+                                    events_idx = ccd_idx & (data.chipx == cx) & (data.chipy == cy) & \
+                                                 (data.time >= t1) & (data.time <= t2)
+
+                                    data.pha[events_idx] = -1
+
+                                    tot_hot_pixels += 1
 
 
     # # Count how many events we are filtering out

@@ -26,6 +26,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--bkgmap", help="Background map file",
                         required=True, type=str)
+
+    parser.add_argument("--expomap", help="Exposure map",
+                        required=True, type=str)
+
     parser.add_argument("--evtfile", help="Filtered event file with sources removed",
                         required=True, type=str)
     parser.add_argument("--asolfile", help="Aspect solution file",
@@ -47,6 +51,7 @@ if __name__ == "__main__":
     asolfile = sanitize_filename(args.asolfile)
     evtfile = sanitize_filename(args.evtfile)
     outfile = sanitize_filename(args.outfile)
+    expomap = sanitize_filename(args.expomap)
 
     for filename in [bkgfile, asolfile, evtfile]:
 
@@ -56,7 +61,30 @@ if __name__ == "__main__":
 
     # Read background image
 
-    data, header = pyfits.getdata(bkgfile, 0, header=True)
+    rate_data, header = pyfits.getdata(bkgfile, 0, header=True)
+
+    # Get start and stop of the observation, and its duration
+    tstart = header['TSTART']
+    tstop = header['TSTOP']
+    duration = tstop - tstart
+
+    # Renormalize by the duration
+    rate_data = rate_data / duration
+
+    # Read exposure map and update it setting to zero all pixels with less than 50% the maximum exposure. The reason
+    # for this is that in long observations the instability of the pointing makes for complicated structures at the
+    # edges of the CCDs which cannot be accurately simulated with the current strategy.
+
+    with pyfits.open(expomap, mode='update') as f:
+
+        expo_data = f[0].data  # type: np.ndarray
+
+        # Set to zero all points with an exposure less than 50% the
+        # maximum exposure
+        idx = (expo_data <= expo_data.max() * 0.5)
+        rate_data[idx] = 0.0
+
+        f[0].data[idx] = 0.0
 
     # Get the frame time
     frame_time = header["EXPTIME"]
@@ -70,11 +98,6 @@ if __name__ == "__main__":
     wcs.wcs.cdelt = [header['CDELT1P'], header['CDELT2P']]
     wcs.wcs.crval = [header['CRVAL1P'], header['CRVAL2P']]
     wcs.wcs.ctype = [header['CTYPE1P'], header['CTYPE2P']]
-
-    # Get start and stop of the observation, and its duration
-    tstart = header['TSTART']
-    tstop = header['TSTOP']
-    duration = tstop - tstart
 
     # Generate a new background image with Poisson noise
 
@@ -95,14 +118,14 @@ if __name__ == "__main__":
     ys = []
     ts = []
 
-    for i in range(data.shape[0]):
+    for i in range(rate_data.shape[0]):
 
-        for j in range(data.shape[1]):
+        for j in range(rate_data.shape[1]):
 
             # NOTE: most of the pixels in the new_data image area actually 0
             # (there is a large padding around the image)
 
-            if data[i, j] > 0:
+            if rate_data[i, j] > 0:
 
                 # Convert from image coordinates to physical coordinates (i.e., X and Y)
 
@@ -113,7 +136,7 @@ if __name__ == "__main__":
                 # Generate time of the events according to a uniform Poisson distribution
                 # with rate given by the background map for this pixel
 
-                rate = data[i, j] / duration
+                rate = rate_data[i, j]
 
                 # Generate arrival times
 
@@ -149,7 +172,7 @@ if __name__ == "__main__":
     xs = np.array(xs)
     ys = np.array(ys)
 
-    logger.info("Generated %i events (expected %.2f)" % (ts.shape[0], np.sum(data)))
+    logger.info("Generated %i events (expected %.2f)" % (ts.shape[0], np.sum(rate_data * duration)))
 
     # Now read in the event file and substitute the x,y and time values of a subsample of events
     # This way we will keep a realistic spectrum for the background
@@ -157,6 +180,8 @@ if __name__ == "__main__":
     logger.info("Generating FITS file...")
 
     new_table = astropy.table.Table.read(evtfile, 'EVENTS')
+
+    new_table.meta['XTDACSIM'] = True
 
     # Get the list of CCDs present
     unique_ccds = np.unique(new_table['ccd_id'])
