@@ -453,6 +453,10 @@ def go(args):
 
     if args.sigmaThreshold > 0:
 
+        # Import here to avoid to override the .use directive in xtdac
+
+        import matplotlib.pyplot as plt
+
         # Now for each cleaned interval perform a likelihood analysis on a region
         # larger than the box. This is needed otherwise it is too difficult to distinguish
         # a PSF-like excess and a flat-like excess
@@ -495,7 +499,7 @@ def go(args):
 
                 box_size_arcsec = max([boxw, boxh]) * hwu.getPixelScale()
 
-                radius = max(50.0, (box_size_arcsec /2.0) * 1.5 / hwu.getPixelScale())
+                radius = max(20.0, (box_size_arcsec /2.0) * 1.5 / hwu.getPixelScale())
 
                 log.info("Radius for search region: %s px" % radius)
 
@@ -504,6 +508,8 @@ def go(args):
                 radius = 40.0 / hwu.getPixelScale()
 
             searchRegionStr = 'physical;circle(%s,%s,%s)' % (boxx, boxy, radius)
+
+            log.info("Search region string: %s" % searchRegionStr)
 
             idx = (time >= interval.tstart) & (time <= interval.tstop)
 
@@ -635,7 +641,10 @@ def go(args):
 
                             warnings.simplefilter("ignore")
 
-                            ls.plot().savefig("c_%.4f_%.4f_%i.png" % (ra,dec,i))
+                            this_fig = ls.plot()
+                            this_fig.savefig("c_%.4f_%.4f_%i.png" % (ra,dec,i))
+
+                            plt.close(this_fig)
 
                     m.removeSource("testSrc")
 
@@ -672,6 +681,11 @@ def go(args):
 
                 finalCandidates.append(interval)
 
+                plt.imshow(TSmap, interpolation='none', origin='lower')
+                plt.colorbar()
+                plt.savefig("exc%s_tsmap.png" % i, tight_layout=True)
+                plt.close()
+                
             else:
 
                 log.debug("Discarding candidate")
