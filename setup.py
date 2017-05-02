@@ -13,7 +13,8 @@ packages = ['XtDac',
             'XtDac/BayesianBlocks',
             'XtDac/DivideAndConquer',
             'XtDac/FixedBinSearch',
-            'XtDac/ChandraUtils'
+            'XtDac/ChandraUtils',
+            'XtDac/utils'
             ]
 
 # XMM scripts
