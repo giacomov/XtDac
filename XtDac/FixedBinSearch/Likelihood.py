@@ -381,7 +381,7 @@ class Likelihood(object):
 
             minuit = iminuit.Minuit(self.mloglike, **self.mpars)
 
-            minuit.tol = 1000
+            minuit.tol = 10
             minuit.set_strategy(0)
 
             minuit.migrad()
@@ -452,18 +452,18 @@ class Likelihood(object):
 
     def plot(self):
 
-        vmin = self.img.min()
-        vmax = self.img.max()
+        #vmin = self.img.min()
+        #vmax = self.img.max()
 
         fig = plt.figure(figsize=(12, 5))
         plt.subplot(1, 3, 1)
         self.img[self.region.empty] = numpy.nan
-        plt.imshow(self.img, interpolation='nearest', vmin=vmin, vmax=vmax, origin='lower')
+        plt.imshow(self.img, interpolation='nearest', origin='lower')
         plt.title("Data")
 
         plt.subplot(1, 3, 2)
         self.m[self.region.empty] = numpy.nan
-        plt.imshow(self.m, interpolation='nearest', vmin=vmin, vmax=vmax, origin='lower')
+        plt.imshow(self.m, interpolation='nearest', origin='lower')
         plt.title("Model")
 
         plt.subplot(1, 3, 3)
