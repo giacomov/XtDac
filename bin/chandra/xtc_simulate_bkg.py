@@ -20,6 +20,7 @@ from XtDac.ChandraUtils.run_command import CommandRunner
 from XtDac.ChandraUtils import logging_system
 from XtDac.ChandraUtils.sanitize_filename import sanitize_filename
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Simulate a background-only observation")
@@ -127,12 +128,6 @@ if __name__ == "__main__":
 
             if rate_data[i, j] > 0:
 
-                # Convert from image coordinates to physical coordinates (i.e., X and Y)
-
-                pixcrd = np.array([[i, j]], np.float_)
-
-                xy = wcs.all_pix2world(pixcrd, 1)[0]
-
                 # Generate time of the events according to a uniform Poisson distribution
                 # with rate given by the background map for this pixel
 
@@ -156,15 +151,75 @@ if __name__ == "__main__":
 
                         break
 
-                # Append the new times and the new X,Y coordinates
+                if len(new_times) > 0:
 
-                ts.extend(new_times)
+                    # Append the new times and the new X,Y coordinates
 
-                # Note the swap in xy (1 is x and 0 is y). This is not an error. It is required to
-                # match the WCS in the event file
+                    ts.extend(new_times)
 
-                xs.extend([xy[1]] * len(new_times))
-                ys.extend([xy[0]] * len(new_times))
+                    # Now generate the coordinates
+
+                    # Convert from image coordinates to physical coordinates (i.e., X and Y)
+
+                    # Generate randomly within the pixel
+                    r_indexx = np.random.uniform(i-0.5, i+0.5, len(new_times))
+                    r_indexy = np.random.uniform(j-0.5, j+0.5, len(new_times))
+
+                    pixcrd = np.array(zip(r_indexx, r_indexy), np.float_)
+
+                    xy = wcs.all_pix2world(pixcrd, 1)
+
+                    # Note the swap in xy (1 is x and 0 is y). This is not an error. It is required to
+                    # match the WCS in the event file
+
+                    xs.extend(xy[:, 1])
+                    ys.extend(xy[:, 0])
+
+        # for j in range(rate_data.shape[1]):
+        #
+        #     # NOTE: most of the pixels in the new_data image area actually 0
+        #     # (there is a large padding around the image)
+        #
+        #     if rate_data[i, j] > 0:
+        #
+        #         # Convert from image coordinates to physical coordinates (i.e., X and Y)
+        #
+        #         pixcrd = np.array([[i, j]], np.float_)
+        #
+        #         xy = wcs.all_pix2world(pixcrd, 1)[0]
+        #
+        #         # Generate time of the events according to a uniform Poisson distribution
+        #         # with rate given by the background map for this pixel
+        #
+        #         rate = rate_data[i, j]
+        #
+        #         # Generate arrival times
+        #
+        #         t = tstart
+        #
+        #         new_times = []
+        #
+        #         while True:
+        #
+        #             t += -np.log(1.0 - random.random()) / rate
+        #
+        #             if t < tstop:
+        #
+        #                 new_times.append(t)
+        #
+        #             else:
+        #
+        #                 break
+        #
+        #         # Append the new times and the new X,Y coordinates
+        #
+        #         ts.extend(new_times)
+        #
+        #         # Note the swap in xy (1 is x and 0 is y). This is not an error. It is required to
+        #         # match the WCS in the event file
+        #
+        #         xs.extend([xy[1]] * len(new_times))
+        #         ys.extend([xy[0]] * len(new_times))
 
     # Transform into arrays
 
